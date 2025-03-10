@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import PatientList from '@/components/PatientList';
 import EmptyState from '@/components/EmptyState';
+import { toast } from '@/components/ui/use-toast';
 
 const Search = () => {
   const location = useLocation();
@@ -38,12 +39,26 @@ const Search = () => {
     }
   }, [initialQuery, patients, searchPatients]);
   
-  const handleSearch = (searchQuery: string) => {
+  const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);
-    if (searchQuery) {
-      setFilteredPatients(searchPatients(searchQuery));
-    } else {
+    
+    if (!searchQuery.trim()) {
+      // If search is empty, show all patients
       setFilteredPatients(patients);
+      return;
+    }
+
+    try {
+      const results = await searchPatients(searchQuery);
+      setFilteredPatients(results);
+    } catch (error) {
+      console.error("Search error:", error);
+      // In case of error, keep the current filtered results instead of setting to empty
+      toast({
+        title: "Search Error",
+        description: "Failed to search patients. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   
