@@ -11,6 +11,7 @@ services:
       - DB_USER=orthouser
       - DB_PASSWORD=orthopass
       - DB_NAME=orthopati_ent
+      - PORT=8080
     depends_on:
       - mysql
     restart: unless-stopped

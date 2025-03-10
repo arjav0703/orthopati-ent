@@ -1,6 +1,6 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { initDatabase, executeQuery } from './database';
 
 // Type definitions
 export interface Patient {
@@ -41,24 +41,28 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // Initialize database and load patients
+  // Load patients from API
   useEffect(() => {
-    const initialize = async () => {
+    const loadPatients = async () => {
       try {
-        await initDatabase();
-        await loadPatients();
+        const response = await fetch('/api/patients');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setPatients(data);
         setIsInitialized(true);
       } catch (error) {
-        console.error('Failed to initialize database:', error);
-        // Fallback to localStorage if database connection fails
+        console.error('Failed to load patients from API:', error);
+        // Fallback to localStorage
         loadFromLocalStorage();
       }
     };
     
-    initialize();
+    loadPatients();
   }, []);
   
-  // Fallback to localStorage if database connection fails
+  // Fallback to localStorage if API fails
   const loadFromLocalStorage = () => {
     const storedPatients = localStorage.getItem('orthopati-ent-patients');
     if (storedPatients) {
@@ -69,90 +73,43 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
         setPatients([]);
       }
     }
-  };
-  
-  // Load patients from database
-  const loadPatients = async () => {
-    try {
-      const patientsResult = await executeQuery('SELECT * FROM patients');
-      
-      const loadedPatients: Patient[] = [];
-      
-      for (const patient of patientsResult as any[]) {
-        // Load visits for each patient
-        const visitsResult = await executeQuery(
-          'SELECT v.* FROM visits v WHERE v.patientId = ?',
-          [patient.id]
-        );
-        
-        const visits: Visit[] = [];
-        
-        for (const visit of visitsResult as any[]) {
-          // Load images for each visit
-          const imagesResult = await executeQuery(
-            'SELECT * FROM visit_images WHERE visitId = ?',
-            [visit.id]
-          );
-          
-          const images = (imagesResult as any[]).map(img => img.imageData);
-          
-          visits.push({
-            id: visit.id,
-            date: new Date(visit.date).toISOString(),
-            diagnosis: visit.diagnosis,
-            prescription: visit.prescription,
-            notes: visit.notes,
-            images: images.length > 0 ? images : undefined
-          });
-        }
-        
-        loadedPatients.push({
-          id: patient.id,
-          name: patient.name,
-          age: patient.age,
-          sex: patient.sex as 'Male' | 'Female' | 'Other',
-          contact: patient.contact,
-          diagnosis: patient.diagnosis,
-          notes: patient.notes,
-          createdAt: new Date(patient.createdAt).toISOString(),
-          visits
-        });
-      }
-      
-      setPatients(loadedPatients);
-    } catch (error) {
-      console.error('Failed to load patients from database:', error);
-      loadFromLocalStorage();
-    }
+    setIsInitialized(true);
   };
   
   // Add a new patient
   const addPatient = async (patientData: Omit<Patient, 'id' | 'createdAt' | 'visits'>): Promise<string> => {
-    const id = uuidv4();
-    const now = new Date().toISOString();
-    
     try {
-      await executeQuery(
-        'INSERT INTO patients (id, name, age, sex, contact, diagnosis, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [id, patientData.name, patientData.age, patientData.sex, patientData.contact, patientData.diagnosis || null, patientData.notes || null, now]
-      );
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientData)
+      });
       
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const { id } = await response.json();
+      
+      // Update local state
       const newPatient: Patient = {
         ...patientData,
         id,
-        createdAt: now,
+        createdAt: new Date().toISOString(),
         visits: []
       };
       
       setPatients(prevPatients => [...prevPatients, newPatient]);
       return id;
     } catch (error) {
-      console.error('Failed to add patient to database:', error);
-      // Fallback to memory-only storage
+      console.error('Failed to add patient via API:', error);
+      
+      // Fallback to client-side only
+      const id = uuidv4();
       const newPatient: Patient = {
         ...patientData,
         id,
-        createdAt: now,
+        createdAt: new Date().toISOString(),
         visits: []
       };
       
@@ -161,50 +118,20 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Get a patient by ID - Fixed to resolve Promise immediately
+  // Get a patient by ID
   const getPatient = async (id: string): Promise<Patient | undefined> => {
     try {
-      const result = await executeQuery('SELECT * FROM patients WHERE id = ?', [id]);
-      const patientRows = result as any[];
-      
-      if (patientRows.length === 0) {
-        return undefined;
+      const response = await fetch(`/api/patients/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return undefined;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const patient = patientRows[0];
-      
-      // Load visits
-      const visitsResult = await executeQuery('SELECT * FROM visits WHERE patientId = ?', [id]);
-      const visits: Visit[] = [];
-      
-      for (const visit of visitsResult as any[]) {
-        // Load images
-        const imagesResult = await executeQuery('SELECT * FROM visit_images WHERE visitId = ?', [visit.id]);
-        const images = (imagesResult as any[]).map(img => img.imageData);
-        
-        visits.push({
-          id: visit.id,
-          date: new Date(visit.date).toISOString(),
-          diagnosis: visit.diagnosis,
-          prescription: visit.prescription,
-          notes: visit.notes,
-          images: images.length > 0 ? images : undefined
-        });
-      }
-      
-      return {
-        id: patient.id,
-        name: patient.name,
-        age: patient.age,
-        sex: patient.sex,
-        contact: patient.contact,
-        diagnosis: patient.diagnosis,
-        notes: patient.notes,
-        createdAt: new Date(patient.createdAt).toISOString(),
-        visits
-      };
+      return await response.json();
     } catch (error) {
-      console.error('Failed to get patient from database:', error);
+      console.error('Failed to get patient via API:', error);
       // Fallback to in-memory state
       return patients.find(patient => patient.id === id);
     }
@@ -213,17 +140,15 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   // Update a patient
   const updatePatient = async (id: string, data: Partial<Omit<Patient, 'id' | 'createdAt' | 'visits'>>): Promise<boolean> => {
     try {
-      const setClause = Object.keys(data)
-        .map(key => `${key} = ?`)
-        .join(', ');
+      const response = await fetch(`/api/patients/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
       
-      const values = Object.values(data);
-      
-      if (values.length === 0) {
-        return false;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      await executeQuery(`UPDATE patients SET ${setClause} WHERE id = ?`, [...values, id]);
       
       // Update local state
       setPatients(prevPatients => {
@@ -241,7 +166,7 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
       
       return true;
     } catch (error) {
-      console.error('Failed to update patient in database:', error);
+      console.error('Failed to update patient via API:', error);
       
       // Fallback to updating in-memory state only
       setPatients(prevPatients => {
@@ -264,14 +189,20 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   // Delete a patient
   const deletePatient = async (id: string): Promise<boolean> => {
     try {
-      await executeQuery('DELETE FROM patients WHERE id = ?', [id]);
+      const response = await fetch(`/api/patients/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       // Update local state
       setPatients(prevPatients => prevPatients.filter(patient => patient.id !== id));
       
       return true;
     } catch (error) {
-      console.error('Failed to delete patient from database:', error);
+      console.error('Failed to delete patient via API:', error);
       
       // Fallback to updating in-memory state only
       setPatients(prevPatients => prevPatients.filter(patient => patient.id !== id));
@@ -282,30 +213,18 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
   
   // Add a visit to a patient
   const addVisit = async (patientId: string, visitData: Omit<Visit, 'id'>): Promise<string | null> => {
-    const visitId = uuidv4();
-    
     try {
-      await executeQuery(
-        'INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes) VALUES (?, ?, ?, ?, ?, ?)',
-        [
-          visitId,
-          patientId,
-          new Date(visitData.date), // Convert ISO string to Date for MySQL
-          visitData.diagnosis || null,
-          visitData.prescription || null,
-          visitData.notes || null
-        ]
-      );
+      const response = await fetch(`/api/patients/${patientId}/visits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(visitData)
+      });
       
-      // Add images if present
-      if (visitData.images && visitData.images.length > 0) {
-        for (const imageData of visitData.images) {
-          await executeQuery(
-            'INSERT INTO visit_images (id, visitId, imageData) VALUES (?, ?, ?)',
-            [uuidv4(), visitId, imageData]
-          );
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const { id } = await response.json();
       
       // Update local state
       setPatients(prevPatients => {
@@ -314,7 +233,7 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
         
         const newVisit: Visit = {
           ...visitData,
-          id: visitId
+          id
         };
         
         const updatedPatients = [...prevPatients];
@@ -326,11 +245,13 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
         return updatedPatients;
       });
       
-      return visitId;
+      return id;
     } catch (error) {
-      console.error('Failed to add visit to database:', error);
+      console.error('Failed to add visit via API:', error);
       
       // Fallback to updating in-memory state only
+      const visitId = uuidv4();
+      
       setPatients(prevPatients => {
         const patientIndex = prevPatients.findIndex(patient => patient.id === patientId);
         if (patientIndex === -1) return prevPatients;
@@ -353,56 +274,19 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Search patients by query - Fixed to return actual Patient[] not Promise<Patient[]>
+  // Search patients by query
   const searchPatients = async (query: string): Promise<Patient[]> => {
     if (!query.trim()) return [];
     
     try {
-      const searchQuery = `%${query.toLowerCase()}%`;
-      
-      const result = await executeQuery(
-        'SELECT * FROM patients WHERE LOWER(name) LIKE ? OR LOWER(diagnosis) LIKE ? OR LOWER(notes) LIKE ?', 
-        [searchQuery, searchQuery, searchQuery]
-      );
-      
-      const matchedPatients: Patient[] = [];
-      
-      for (const patient of result as any[]) {
-        // Load visits for each matched patient
-        const visitsResult = await executeQuery('SELECT * FROM visits WHERE patientId = ?', [patient.id]);
-        const visits: Visit[] = [];
-        
-        for (const visit of visitsResult as any[]) {
-          // Load images
-          const imagesResult = await executeQuery('SELECT * FROM visit_images WHERE visitId = ?', [visit.id]);
-          const images = (imagesResult as any[]).map(img => img.imageData);
-          
-          visits.push({
-            id: visit.id,
-            date: new Date(visit.date).toISOString(),
-            diagnosis: visit.diagnosis,
-            prescription: visit.prescription,
-            notes: visit.notes,
-            images: images.length > 0 ? images : undefined
-          });
-        }
-        
-        matchedPatients.push({
-          id: patient.id,
-          name: patient.name,
-          age: patient.age,
-          sex: patient.sex,
-          contact: patient.contact,
-          diagnosis: patient.diagnosis,
-          notes: patient.notes,
-          createdAt: new Date(patient.createdAt).toISOString(),
-          visits
-        });
+      const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return matchedPatients;
+      return await response.json();
     } catch (error) {
-      console.error('Failed to search patients in database:', error);
+      console.error('Failed to search patients via API:', error);
       
       // Fallback to in-memory search
       const lowercaseQuery = query.toLowerCase();

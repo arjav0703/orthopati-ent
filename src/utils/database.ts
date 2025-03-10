@@ -1,4 +1,7 @@
 
+// This file is now used only by the server.js file
+// This code does not run in the browser anymore
+
 import mysql from 'mysql2/promise';
 
 // MySQL connection configuration using environment variables
