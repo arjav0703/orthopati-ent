@@ -1,204 +1,137 @@
-
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, ChevronRight, Users, Calendar, Clock } from 'lucide-react';
-import Layout from '@/components/Layout';
-import SearchBar from '@/components/SearchBar';
-import PatientCard from '@/components/PatientCard';
-import NewPatientModal from '@/components/NewPatientModal';
-import { usePatients } from '@/utils/patientStore';
-import { useNavigate } from 'react-router-dom';
-import { isAfter, parseISO, startOfDay } from 'date-fns';
-
-interface Appointment {
-  id: string;
-  patientId: string;
-  date: string;
-  time: string;
-  duration: number;
-  description?: string;
-}
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Plus, ChevronRight, Calendar, Search as SearchIcon } from "lucide-react";
+import Layout from "@/components/Layout";
+import PatientCard from "@/components/PatientCard";
+import NewPatientModal from "@/components/NewPatientModal";
+import { usePatients } from "@/utils/patientStore";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { patients, addPatient } = usePatients();
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  
-  // Load appointments from localStorage
-  useEffect(() => {
-    const storedAppointments = localStorage.getItem('orthopati-ent-appointments');
-    if (storedAppointments) {
-      try {
-        setAppointments(JSON.parse(storedAppointments));
-      } catch (error) {
-        console.error('Failed to parse stored appointments:', error);
-      }
-    }
-  }, []);
-  
-  const recentPatients = patients.slice(0, 5);
-  
-  const handleSearch = (query: string) => {
-    navigate(`/search?q=${encodeURIComponent(query)}`);
+  const { patients, addPatient } = usePatients();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Get recent patients (last 6)
+  const recentPatients = [...patients]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6);
+
+  // Get upcoming appointments (next 3)
+  const upcomingAppointments = []; // TODO: Implement appointments logic
+
+  const handleAddPatient = async (patientData: any) => {
+    await addPatient(patientData);
   };
-  
-  const handleAddPatient = (patientData: any) => {
-    addPatient(patientData);
-  };
-  
-  // Count upcoming appointments
-  const upcomingAppointments = appointments.filter(app => {
-    const appointmentDate = parseISO(`${app.date}T${app.time}`);
-    return isAfter(appointmentDate, startOfDay(new Date()));
-  });
-  
-  // Recent visits count (from patient visits)
-  const recentVisitsCount = patients.reduce((count, patient) => {
-    // Consider visits in the last 30 days as recent
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const recentVisits = patient.visits.filter(visit => {
-      return isAfter(parseISO(visit.date), thirtyDaysAgo);
-    });
-    
-    return count + recentVisits.length;
-  }, 0);
-  
-  // Statistics data
-  const stats = [
-    { label: 'Total Patients', value: patients.length, icon: <Users size={20} /> },
-    { label: 'Upcoming Visits', value: upcomingAppointments.length, icon: <Calendar size={20} /> },
-    { label: 'Recent Visits', value: recentVisitsCount, icon: <Clock size={20} /> },
-  ];
-  
+
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto animate-fadeIn">
-        {/* Welcome section */}
-        <section className="mb-8">
-          <motion.h1 
-            className="text-3xl font-bold mb-2"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            Welcome to OrthoPatient
-          </motion.h1>
-          <motion.p 
-            className="text-muted-foreground mb-6"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            Manage your patient records efficiently and securely
-          </motion.p>
-          
-          <SearchBar onSearch={handleSearch} className="mb-6" />
-          
-          {/* Action buttons */}
-          <div className="flex gap-4">
-            <motion.button
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium shadow-subtle hover:bg-primary/90 transition-all-medium"
-              onClick={() => setIsModalOpen(true)}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              whileHover={{ y: -2 }}
-            >
-              <Plus size={20} />
-              <span>Add New Patient</span>
-            </motion.button>
-            
-            <motion.button
-              className="flex items-center gap-2 bg-secondary text-foreground px-4 py-3 rounded-xl font-medium shadow-subtle hover:bg-secondary/80 transition-all-medium"
-              onClick={() => navigate('/appointments')}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-              whileHover={{ y: -2 }}
-            >
-              <Calendar size={20} />
-              <span>Manage Appointments</span>
-            </motion.button>
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Header Section */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your patients and appointments
+            </p>
           </div>
-        </section>
-        
-        {/* Stats cards */}
-        <section className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                className="glass border p-5 rounded-xl shadow-subtle"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                    {stat.icon}
-                  </div>
-                  <h3 className="text-lg font-medium">{stat.label}</h3>
-                </div>
-                <p className="text-3xl font-bold">{stat.value}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-        
-        {/* Recent patients */}
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Recent Patients</h2>
-            <button 
-              onClick={() => navigate('/search')}
-              className="flex items-center text-primary text-sm font-medium hover:underline"
-            >
-              View all 
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Patient
+          </Button>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Total Patients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{patients.length}</p>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer" onClick={() => navigate('/search')}>
+            <CardHeader>
+              <CardTitle className="text-lg">Search Patients</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center text-muted-foreground">
+              <SearchIcon className="mr-2" size={20} />
+              <span>Quick search...</span>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer" onClick={() => navigate('/appointments')}>
+            <CardHeader>
+              <CardTitle className="text-lg">Appointments</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center text-muted-foreground">
+              <Calendar className="mr-2" size={20} />
+              <span>View schedule</span>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Tabs defaultValue="patients" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="patients">Recent Patients</TabsTrigger>
+            <TabsTrigger value="appointments">Upcoming Appointments</TabsTrigger>
+          </TabsList>
           
-          {recentPatients.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {recentPatients.map((patient, index) => (
-                <PatientCard
-                  key={patient.id}
-                  id={patient.id}
-                  name={patient.name}
-                  age={patient.age}
-                  sex={patient.sex}
-                  diagnosis={patient.diagnosis}
-                  lastVisit={patient.visits.length > 0 ? 
-                    new Date(patient.visits[patient.visits.length - 1].date).toLocaleDateString() : 
-                    new Date(patient.createdAt).toLocaleDateString()
-                  }
-                  index={index}
-                />
-              ))}
+          <TabsContent value="patients" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Recent Patients</h2>
+              <Button variant="ghost" onClick={() => navigate('/search')}>
+                View all
+                <ChevronRight size={16} className="ml-1" />
+              </Button>
             </div>
-          ) : (
-            <motion.div 
-              className="glass border p-8 rounded-xl text-center shadow-subtle"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <p className="text-muted-foreground mb-4">No patients added yet</p>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-2 text-primary font-medium hover:underline"
+            
+            {recentPatients.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recentPatients.map((patient, index) => (
+                  <PatientCard
+                    key={patient.id}
+                    id={patient.id}
+                    name={patient.name}
+                    age={patient.age}
+                    sex={patient.sex}
+                    diagnosis={patient.diagnosis}
+                    lastVisit={patient.visits.length > 0 ? 
+                      new Date(patient.visits[patient.visits.length - 1].date).toLocaleDateString() : 
+                      new Date(patient.createdAt).toLocaleDateString()
+                    }
+                    index={index}
+                  />
+                ))}
+              </div>
+            ) : (
+              <motion.div 
+                className="text-center p-8 border rounded-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
-                <Plus size={18} />
-                <span>Add your first patient</span>
-              </button>
-            </motion.div>
-          )}
-        </section>
+                <p className="text-muted-foreground mb-4">No patients added yet</p>
+                <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add your first patient
+                </Button>
+              </motion.div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="appointments">
+            {/* TODO: Implement appointments view */}
+            <div className="text-center p-8 border rounded-lg">
+              <p className="text-muted-foreground">No upcoming appointments</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-      
-      {/* New Patient Modal */}
+
       <NewPatientModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

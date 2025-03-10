@@ -1,14 +1,16 @@
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface NewPatientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (patientData: PatientFormData) => void;
+  onSave: (data: PatientFormData) => void;
 }
 
 interface PatientFormData {
@@ -20,7 +22,7 @@ interface PatientFormData {
   notes?: string;
 }
 
-const NewPatientModal: React.FC<NewPatientModalProps> = ({ isOpen, onClose, onSave }) => {
+const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<PatientFormData>({
     name: '',
@@ -30,14 +32,6 @@ const NewPatientModal: React.FC<NewPatientModalProps> = ({ isOpen, onClose, onSa
     diagnosis: '',
     notes: '',
   });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'age' ? Number(value) : value
-    }));
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +51,6 @@ const NewPatientModal: React.FC<NewPatientModalProps> = ({ isOpen, onClose, onSa
       description: "Patient information saved successfully",
     });
     
-    // Reset form
     setFormData({
       name: '',
       age: 0,
@@ -71,135 +64,87 @@ const NewPatientModal: React.FC<NewPatientModalProps> = ({ isOpen, onClose, onSa
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Patient</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              required
+            />
+          </div>
           
-          <motion.div
-            className="relative w-full max-w-lg max-h-[90vh] overflow-auto glass shadow-glass border rounded-xl p-6"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-medium">New Patient</h2>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-full hover:bg-secondary transition-all-medium"
-              >
-                <X size={18} />
-              </button>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="age">Age *</Label>
+              <Input
+                id="age"
+                type="number"
+                value={formData.age || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, age: Number(e.target.value) }))}
+                required
+              />
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                  placeholder="Full Name"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Age *</label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age || ''}
-                    onChange={handleChange}
-                    className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                    min="0"
-                    max="150"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Sex *</label>
-                  <select
-                    name="sex"
-                    value={formData.sex}
-                    onChange={handleChange}
-                    className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                    required
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Contact Number *</label>
-                <input
-                  type="text"
-                  name="contact"
-                  value={formData.contact}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                  placeholder="Phone number"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Initial Diagnosis</label>
-                <input
-                  type="text"
-                  name="diagnosis"
-                  value={formData.diagnosis}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                  placeholder="Initial diagnosis if available"
-                />
-              </div>
-              
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Notes</label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200 min-h-[100px] resize-y"
-                  placeholder="Additional notes..."
-                />
-              </div>
-              
-              <div className="pt-2 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-lg border hover:bg-secondary transition-all-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all-medium"
-                >
-                  Save Patient
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+            <div className="space-y-2">
+              <Label htmlFor="sex">Sex *</Label>
+              <Select
+                value={formData.sex}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, sex: value as 'Male' | 'Female' | 'Other' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select sex" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contact">Contact Number *</Label>
+            <Input
+              id="contact"
+              value={formData.contact}
+              onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="diagnosis">Initial Diagnosis</Label>
+            <Input
+              id="diagnosis"
+              value={formData.diagnosis}
+              onChange={(e) => setFormData(prev => ({ ...prev, diagnosis: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="submit">Save Patient</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

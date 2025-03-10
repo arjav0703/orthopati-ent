@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,7 +7,7 @@ import {
   Trash2, Camera, X, Save, FileText 
 } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { usePatients, Visit } from '@/utils/patientStore';
+import { usePatients, Visit, Patient } from '@/utils/patientStore';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 
@@ -18,16 +17,16 @@ const PatientDetail = () => {
   const { getPatient, updatePatient, deletePatient, addVisit } = usePatients();
   const { toast } = useToast();
   
-  const [patient, setPatient] = useState(id ? getPatient(id) : undefined);
+  const [patient, setPatient] = useState<Patient | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddingVisit, setIsAddingVisit] = useState(false);
   const [editedData, setEditedData] = useState({
-    name: patient?.name || '',
-    age: patient?.age || 0,
-    sex: patient?.sex || 'Male',
-    contact: patient?.contact || '',
-    diagnosis: patient?.diagnosis || '',
-    notes: patient?.notes || '',
+    name: '',
+    age: 0,
+    sex: 'Male',
+    contact: '',
+    diagnosis: '',
+    notes: '',
   });
   
   const [newVisit, setNewVisit] = useState<Omit<Visit, 'id'>>({
@@ -42,24 +41,34 @@ const PatientDetail = () => {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [selectedVisitIndex, setSelectedVisitIndex] = useState<number | null>(null);
   
-  // Refresh patient data when the ID changes
   useEffect(() => {
-    if (id) {
-      const patientData = getPatient(id);
-      setPatient(patientData);
-      
-      if (patientData) {
-        setEditedData({
-          name: patientData.name,
-          age: patientData.age,
-          sex: patientData.sex,
-          contact: patientData.contact || '',
-          diagnosis: patientData.diagnosis || '',
-          notes: patientData.notes || '',
-        });
+    async function loadPatient() {
+      if (id) {
+        try {
+          const patientData = await getPatient(id);
+          setPatient(patientData);
+          if (patientData) {
+            setEditedData({
+              name: patientData.name,
+              age: patientData.age,
+              sex: patientData.sex,
+              contact: patientData.contact || '',
+              diagnosis: patientData.diagnosis || '',
+              notes: patientData.notes || '',
+            });
+          }
+        } catch (error) {
+          console.error('Error loading patient:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load patient data",
+            variant: "destructive",
+          });
+        }
       }
     }
-  }, [id, getPatient]);
+    loadPatient();
+  }, [id, getPatient, toast]);
   
   if (!patient || !id) {
     return (

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -6,6 +5,25 @@ import Layout from '@/components/Layout';
 import { usePatients, Patient } from '@/utils/patientStore';
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, addDays, isSameDay, getDay, parseISO } from 'date-fns';
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface Appointment {
   id: string;
@@ -24,7 +42,7 @@ const timeSlots = [
 ];
 
 const Appointments = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(() => {
     const storedAppointments = localStorage.getItem('orthopati-ent-appointments');
     return storedAppointments ? JSON.parse(storedAppointments) : [];
@@ -179,253 +197,156 @@ const Appointments = () => {
   
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto animate-fadeIn">
-        <motion.h1 
-          className="text-3xl font-bold mb-2"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          Appointments
-        </motion.h1>
-        <motion.p 
-          className="text-muted-foreground mb-6"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          Manage patient appointments and scheduling
-        </motion.p>
-        
-        {/* Calendar navigation */}
-        <div className="glass border rounded-xl shadow-subtle p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CalendarIcon size={20} className="text-primary" />
-              <h2 className="text-xl font-semibold">Calendar</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={goToPreviousDay}
-                className="p-2 rounded-lg hover:bg-secondary transition-all-medium"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <div className="font-medium">
-                {format(selectedDate, 'MMMM d, yyyy')}
-              </div>
-              <button 
-                onClick={goToNextDay}
-                className="p-2 rounded-lg hover:bg-secondary transition-all-medium"
-              >
-                <ChevronRight size={20} />
-              </button>
-              <button 
-                onClick={() => setSelectedDate(new Date())}
-                className="ml-2 px-3 py-1 text-sm rounded-lg bg-secondary hover:bg-secondary/70 transition-all-medium"
-              >
-                Today
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Appointments</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your patient appointments
+            </p>
           </div>
-          
-          {/* Week day selector */}
-          <div className="flex gap-2 mb-4">
-            {renderWeekDays()}
-          </div>
-          
-          {/* Add appointment button */}
-          <div className="flex justify-end mb-6">
-            {!isAddingAppointment && (
-              <button 
-                onClick={() => setIsAddingAppointment(true)}
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium shadow-subtle hover:bg-primary/90 transition-all-medium"
-              >
-                <Plus size={16} />
-                <span>Add Appointment</span>
-              </button>
-            )}
-          </div>
-          
-          {/* Add appointment form */}
-          <motion.div
-            className="mb-6"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ 
-              opacity: isAddingAppointment ? 1 : 0,
-              height: isAddingAppointment ? 'auto' : 0
-            }}
-            transition={{ duration: 0.3 }}
-          >
+          <Button onClick={() => setIsAddingAppointment(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Appointment
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+          <Card>
+            <CardContent className="p-4">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                className="rounded-md border"
+              />
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">
+              Appointments for {format(selectedDate, "MMMM d, yyyy")}
+            </h2>
+
             {isAddingAppointment && (
-              <div className="border rounded-xl p-4 space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium">New Appointment</h3>
-                  <button 
-                    onClick={() => setIsAddingAppointment(false)}
-                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Patient *</label>
-                    <select
-                      name="patientId"
-                      value={newAppointment.patientId}
-                      onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                      required
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium">New Appointment</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsAddingAppointment(false)}
                     >
-                      <option value="">Select Patient</option>
-                      {patients.map(patient => (
-                        <option key={patient.id} value={patient.id}>
-                          {patient.name}
-                        </option>
-                      ))}
-                    </select>
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Date *</label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={newAppointment.date}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Patient</Label>
+                      <Select
+                        value={newAppointment.patientId}
+                        onValueChange={(value) =>
+                          setNewAppointment({ ...newAppointment, patientId: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select patient" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {patients.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id}>
+                              {patient.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Time</Label>
+                      <Select
+                        value={newAppointment.time}
+                        onValueChange={(value) =>
+                          setNewAppointment({ ...newAppointment, time: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeSlots.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Duration (minutes)</Label>
+                      <Select
+                        value={String(newAppointment.duration)}
+                        onValueChange={(value) =>
+                          setNewAppointment({
+                            ...newAppointment,
+                            duration: parseInt(value),
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="90">1.5 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      name="description"
+                      value={newAppointment.description}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                      required
+                      placeholder="Add appointment details..."
                     />
                   </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Time *</label>
-                    <select
-                      name="time"
-                      value={newAppointment.time}
-                      onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                      required
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddingAppointment(false)}
                     >
-                      {timeSlots.map(time => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
+                      Cancel
+                    </Button>
+                    <Button>Save Appointment</Button>
                   </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Duration (minutes) *</label>
-                    <select
-                      name="duration"
-                      value={newAppointment.duration.toString()}
-                      onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
-                      required
-                    >
-                      <option value="15">15 minutes</option>
-                      <option value="30">30 minutes</option>
-                      <option value="45">45 minutes</option>
-                      <option value="60">60 minutes</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Description</label>
-                  <textarea
-                    name="description"
-                    value={newAppointment.description || ''}
-                    onChange={handleInputChange}
-                    className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200 min-h-[80px] resize-y"
-                  />
-                </div>
-                
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    onClick={() => setIsAddingAppointment(false)}
-                    className="px-4 py-2 rounded-lg border hover:bg-secondary transition-all-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAddAppointment}
-                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all-medium"
-                  >
-                    Save Appointment
-                  </button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
-          </motion.div>
-          
-          {/* Appointments for selected date */}
-          <div>
-            <h3 className="font-medium mb-3">
-              {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-            </h3>
-            
-            <div className="space-y-3">
-              {timeSlots.map(time => {
-                const appointment = getAppointmentAtTime(selectedDate, time);
-                const patient = appointment ? getPatientDetails(appointment.patientId) : undefined;
-                
-                return (
-                  <div
-                    key={time}
-                    className={`flex border rounded-lg p-3 transition-all-medium ${
-                      appointment ? 'bg-primary/5 border-primary/20' : 'hover:bg-secondary/50'
-                    }`}
-                  >
-                    <div className="w-16 text-muted-foreground flex items-center">
-                      <Clock size={14} className="mr-1" />
-                      {time}
-                    </div>
-                    
-                    {appointment && patient ? (
-                      <div className="flex-1 flex justify-between items-center">
-                        <div className="flex-1">
-                          <div className="font-medium">{patient.name}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2">
-                            <span>{appointment.duration} min</span>
-                            {appointment.description && (
-                              <span>• {appointment.description}</span>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteAppointment(appointment.id)}
-                          className="p-2 text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex-1 text-muted-foreground text-sm flex items-center">
-                        {isAddingAppointment ? (
-                          <span>Select a time in the form above</span>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setIsAddingAppointment(true);
-                              setNewAppointment(prev => ({
-                                ...prev,
-                                time
-                              }));
-                            }}
-                            className="text-primary hover:underline"
-                          >
-                            Available
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+
+            <div className="space-y-2">
+              {appointments.length > 0 ? (
+                appointments.map((appointment) => (
+                  <Card key={appointment.id}>
+                    <CardContent className="p-4">
+                      {/* Appointment details */}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center p-8 border rounded-lg">
+                  <p className="text-muted-foreground">
+                    No appointments scheduled for this day
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
