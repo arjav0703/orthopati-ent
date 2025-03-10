@@ -1,18 +1,26 @@
+import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import mysql from 'mysql2/promise';
+import { v4 as uuidv4 } from 'uuid';
+import 'dotenv/config';
 
-const express = require('express');
-const path = require('path');
-const mysql = require('mysql2/promise');
-const { v4: uuidv4 } = require('uuid');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Database configuration
+// Add body parser middleware
+app.use(express.json());
+
+// Database configuration matching docker-compose.yml exactly
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'orthopati_ent',
+  host: process.env.DB_HOST || 'mysql',
+  user: process.env.DB_USER || 'user',
+  password: process.env.DB_PASSWORD || 'password',
+  database: process.env.DB_NAME || 'cli_pat',
+  port: parseInt(process.env.DB_PORT || '3306'),
 };
 
 // Create MySQL connection pool
@@ -22,6 +30,7 @@ console.log('Using database config:', {
   host: dbConfig.host,
   user: dbConfig.user,
   database: dbConfig.database,
+  port: dbConfig.port
   // Not logging password for security
 });
 
@@ -161,7 +170,16 @@ app.get('/api/patients/:id', async (req, res) => {
 app.post('/api/patients', async (req, res) => {
   try {
     const { name, age, sex, contact, diagnosis, notes } = req.body;
+    
+    // Validate required fields
+    if (!name || !age || !sex) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
     const id = uuidv4();
+    
+    // Debug log
+    console.log('Creating patient with data:', { id, name, age, sex, contact, diagnosis, notes });
     
     await pool.execute(
       'INSERT INTO patients (id, name, age, sex, contact, diagnosis, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -286,11 +304,11 @@ initDatabase().then((initialized) => {
 });
 
 // Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(join(__dirname, 'dist')));
 
 // Return the React app for any other requests
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
 // Start the server
