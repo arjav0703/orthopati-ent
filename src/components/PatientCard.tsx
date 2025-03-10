@@ -1,10 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, User, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, User, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface PatientCardProps {
   id: string;
@@ -13,7 +11,6 @@ interface PatientCardProps {
   sex: 'Male' | 'Female' | 'Other';
   lastVisit?: string;
   diagnosis?: string;
-  priority?: 'low' | 'medium' | 'high';
   className?: string;
   index?: number;
 }
@@ -25,20 +22,9 @@ const PatientCard: React.FC<PatientCardProps> = ({
   sex,
   lastVisit,
   diagnosis,
-  priority = 'low',
   className,
   index = 0
 }) => {
-  const priorityColors = {
-    low: 'bg-green-500/10 text-green-500',
-    medium: 'bg-yellow-500/10 text-yellow-500',
-    high: 'bg-red-500/10 text-red-500'
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
   return (
     <motion.div
       className={cn(
@@ -54,16 +40,9 @@ const PatientCard: React.FC<PatientCardProps> = ({
       </Link>
 
       <div className="flex items-start gap-4">
-        <Avatar className="h-10 w-10">
-          <AvatarFallback>{getInitials(name)}</AvatarFallback>
-        </Avatar>
-
         <div className="flex-1 space-y-1">
           <div className="flex items-center justify-between">
             <h3 className="font-medium">{name}</h3>
-            <Badge variant="outline" className={cn("text-xs", priorityColors[priority])}>
-              {priority}
-            </Badge>
           </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
