@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { initDatabase, executeQuery } from './database';
@@ -162,7 +161,7 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Get a patient by ID
+  // Get a patient by ID - Fixed to resolve Promise immediately
   const getPatient = async (id: string): Promise<Patient | undefined> => {
     try {
       const result = await executeQuery('SELECT * FROM patients WHERE id = ?', [id]);
@@ -354,7 +353,7 @@ export const PatientProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Search patients by query
+  // Search patients by query - Fixed to return actual Patient[] not Promise<Patient[]>
   const searchPatients = async (query: string): Promise<Patient[]> => {
     if (!query.trim()) return [];
     

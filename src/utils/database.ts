@@ -1,14 +1,20 @@
 
 import mysql from 'mysql2/promise';
 
-// MySQL connection configuration
-// Note: These values should be replaced with your actual MySQL credentials
+// MySQL connection configuration using environment variables
 const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'orthopati_ent',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'orthopati_ent',
 };
+
+console.log('Using database config:', {
+  host: dbConfig.host,
+  user: dbConfig.user,
+  database: dbConfig.database,
+  // Not logging password for security
+});
 
 // Create a connection pool
 export const pool = mysql.createPool(dbConfig);
