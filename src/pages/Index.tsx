@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, ChevronRight, Users, Calendar, Clock } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -8,11 +8,34 @@ import PatientCard from '@/components/PatientCard';
 import NewPatientModal from '@/components/NewPatientModal';
 import { usePatients } from '@/utils/patientStore';
 import { useNavigate } from 'react-router-dom';
+import { isAfter, parseISO, startOfDay } from 'date-fns';
+
+interface Appointment {
+  id: string;
+  patientId: string;
+  date: string;
+  time: string;
+  duration: number;
+  description?: string;
+}
 
 const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { patients, addPatient } = usePatients();
   const navigate = useNavigate();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  
+  // Load appointments from localStorage
+  useEffect(() => {
+    const storedAppointments = localStorage.getItem('orthopati-ent-appointments');
+    if (storedAppointments) {
+      try {
+        setAppointments(JSON.parse(storedAppointments));
+      } catch (error) {
+        console.error('Failed to parse stored appointments:', error);
+      }
+    }
+  }, []);
   
   const recentPatients = patients.slice(0, 5);
   
@@ -24,11 +47,30 @@ const Index = () => {
     addPatient(patientData);
   };
   
+  // Count upcoming appointments
+  const upcomingAppointments = appointments.filter(app => {
+    const appointmentDate = parseISO(`${app.date}T${app.time}`);
+    return isAfter(appointmentDate, startOfDay(new Date()));
+  });
+  
+  // Recent visits count (from patient visits)
+  const recentVisitsCount = patients.reduce((count, patient) => {
+    // Consider visits in the last 30 days as recent
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentVisits = patient.visits.filter(visit => {
+      return isAfter(parseISO(visit.date), thirtyDaysAgo);
+    });
+    
+    return count + recentVisits.length;
+  }, 0);
+  
   // Statistics data
   const stats = [
     { label: 'Total Patients', value: patients.length, icon: <Users size={20} /> },
-    { label: 'Upcoming Visits', value: 0, icon: <Calendar size={20} /> },
-    { label: 'Recent Visits', value: 0, icon: <Clock size={20} /> },
+    { label: 'Upcoming Visits', value: upcomingAppointments.length, icon: <Calendar size={20} /> },
+    { label: 'Recent Visits', value: recentVisitsCount, icon: <Clock size={20} /> },
   ];
   
   return (
@@ -67,6 +109,18 @@ const Index = () => {
             >
               <Plus size={20} />
               <span>Add New Patient</span>
+            </motion.button>
+            
+            <motion.button
+              className="flex items-center gap-2 bg-secondary text-foreground px-4 py-3 rounded-xl font-medium shadow-subtle hover:bg-secondary/80 transition-all-medium"
+              onClick={() => navigate('/appointments')}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              whileHover={{ y: -2 }}
+            >
+              <Calendar size={20} />
+              <span>Manage Appointments</span>
             </motion.button>
           </div>
         </section>
