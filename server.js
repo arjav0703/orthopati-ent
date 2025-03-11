@@ -169,25 +169,24 @@ app.get('/api/patients/:id', async (req, res) => {
 
 app.post('/api/patients', async (req, res) => {
   try {
-    const { name, age, sex, contact, diagnosis, notes, prescriptionImages } = req.body;
-    const patientId = uuidv4();
+    const { name, age, sex, contact, diagnosis, notes } = req.body;
     
-    await pool.execute(
-      'INSERT INTO patients (id, name, age, sex, contact, diagnosis, notes, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [patientId, name, age, sex, contact, diagnosis || null, notes || null, new Date()]
-    );
-    
-    // Store prescription images if present
-    if (prescriptionImages && prescriptionImages.length > 0) {
-      for (const imageData of prescriptionImages) {
-        await pool.execute(
-          'INSERT INTO prescription_images (id, patientId, imageData, createdAt) VALUES (?, ?, ?, ?)',
-          [uuidv4(), patientId, imageData, new Date()]
-        );
-      }
+    // Validate required fields
+    if (!name || !age || !sex) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    res.status(201).json({ id: patientId });
+    const id = uuidv4();
+    
+    // Debug log
+    console.log('Creating patient with data:', { id, name, age, sex, contact, diagnosis, notes });
+    
+    await pool.execute(
+      'INSERT INTO patients (id, name, age, sex, contact, diagnosis, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, name, age, sex, contact || null, diagnosis || null, notes || null]
+    );
+    
+    res.status(201).json({ id });
   } catch (error) {
     console.error('Error creating patient:', error);
     res.status(500).json({ error: 'Failed to create patient' });

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { X, Camera } from "lucide-react";
 
 interface NewPatientModalProps {
@@ -27,8 +27,6 @@ interface PatientFormData {
 const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
   const { toast } = useToast();
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [formData, setFormData] = useState<PatientFormData>({
     name: '',
     age: 0,
@@ -70,59 +68,24 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
     onClose();
   };
 
-  const handleCameraClick = () => {
-    if (!isCameraActive) {
-      initializeCamera();
-    }
-  };
-
-  const initializeCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' }
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-      setIsCameraActive(true);
-    } catch (error) {
-      console.error('Camera access error:', error);
-      toast({
-        title: "Camera Error",
-        description: "Unable to access camera. Please check permissions.",
-        variant: "destructive",
-      });
-    }
-  };
-
+  // Add camera capture handler
   const handleCameraCapture = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(videoRef.current, 0, 0);
-      const imageData = canvas.toDataURL('image/jpeg');
-      
-      setFormData(prev => ({
-        ...prev,
-        prescriptionImages: [...(prev.prescriptionImages || []), imageData]
-      }));
-
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        setStream(null);
-      }
-      setIsCameraActive(false);
-      
-      toast({
-        title: "Image Captured",
-        description: "Prescription image has been added",
-      });
-    }
+    // Simulate camera capture with a base64 image
+    const simulatedImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM4ODgiPlByZXNjcmlwdGlvbiBJbWFnZTwvdGV4dD48L3N2Zz4=";
+    
+    setFormData(prev => ({
+      ...prev,
+      prescriptionImages: [...(prev.prescriptionImages || []), simulatedImage]
+    }));
+    setIsCameraActive(false);
+    
+    toast({
+      title: "Image Captured",
+      description: "Prescription image has been added",
+    });
   };
 
+  // Add image removal handler
   const handleRemoveImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
@@ -206,6 +169,7 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
             />
           </div>
 
+          {/* Add Prescription Images section */}
           <div className="space-y-2">
             <Label>Prescription Images</Label>
             <div className="flex flex-wrap gap-3">
@@ -231,13 +195,8 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
               
               {isCameraActive ? (
                 <div className="w-full rounded-lg border p-4">
-                  <div className="bg-muted h-[200px] mb-3 rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="bg-muted h-[200px] mb-3 rounded-lg flex items-center justify-center">
+                    <div className="text-muted-foreground">Camera Preview</div>
                   </div>
                   <div className="flex justify-center gap-3">
                     <Button
@@ -249,13 +208,7 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        if (stream) {
-                          stream.getTracks().forEach(track => track.stop());
-                          setStream(null);
-                        }
-                        setIsCameraActive(false);
-                      }}
+                      onClick={() => setIsCameraActive(false)}
                     >
                       Cancel
                     </Button>
@@ -266,7 +219,7 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
                   type="button"
                   variant="outline"
                   className="w-24 h-24 flex flex-col items-center justify-center gap-1"
-                  onClick={handleCameraClick}
+                  onClick={() => setIsCameraActive(true)}
                 >
                   <Camera size={20} />
                   <span className="text-xs">Add Image</span>
