@@ -30,7 +30,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   return (
     <motion.div
       className={cn(
-        "group relative rounded-lg border bg-card p-4 transition-all hover:shadow-md",
+        "group relative rounded-lg border bg-card p-3 sm:p-4 transition-all hover:shadow-md",
         className
       )}
       initial={{ opacity: 0, y: 20 }}
@@ -41,13 +41,13 @@ const PatientCard: React.FC<PatientCardProps> = ({
         <span className="sr-only">View patient details</span>
       </Link>
 
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
         <div className="flex-1 space-y-1">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium">{name}</h3>
+            <h3 className="font-medium text-sm sm:text-base">{name}</h3>
           </div>
 
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <User size={12} />
               {age} yrs • {sex}
@@ -61,13 +61,13 @@ const PatientCard: React.FC<PatientCardProps> = ({
           </div>
 
           {diagnosis && (
-            <p className="text-sm line-clamp-1 text-muted-foreground">
+            <p className="text-xs sm:text-sm line-clamp-1 text-muted-foreground">
               {diagnosis}
             </p>
           )}
         </div>
         {xrayRequired && (
-          <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-full">
+          <span className="px-2 py-0.5 sm:py-1 text-xs font-medium text-white bg-blue-500 rounded-full whitespace-nowrap">
             X-ray
           </span>
         )}
