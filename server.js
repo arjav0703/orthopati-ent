@@ -62,6 +62,7 @@ const initDatabase = async () => {
         diagnosis TEXT,
         prescription TEXT,
         notes TEXT,
+        xrayRequired BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE
       )
     `);
@@ -231,12 +232,12 @@ app.delete('/api/patients/:id', async (req, res) => {
 app.post('/api/patients/:patientId/visits', async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { date, diagnosis, prescription, notes, images } = req.body;
+    const { date, diagnosis, prescription, notes, xrayRequired, images } = req.body;
     const visitId = uuidv4();
     
     await pool.execute(
-      'INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes) VALUES (?, ?, ?, ?, ?, ?)',
-      [visitId, patientId, new Date(date), diagnosis || null, prescription || null, notes || null]
+      'INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [visitId, patientId, new Date(date), diagnosis || null, prescription || null, notes || null, xrayRequired || false]
     );
     
     // Add images if present

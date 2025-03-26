@@ -104,6 +104,7 @@ const Index = () => {
                       new Date(patient.visits[patient.visits.length - 1].date).toLocaleDateString() : 
                       new Date(patient.createdAt).toLocaleDateString()
                     }
+                    xrayRequired={patient.visits.some(visit => visit.xrayRequired)}
                     index={index}
                   />
                 ))}

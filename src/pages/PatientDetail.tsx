@@ -34,6 +34,7 @@ const PatientDetail = () => {
     diagnosis: '',
     prescription: '',
     notes: '',
+    xrayRequired: false,
   });
   
   useEffect(() => {
@@ -91,10 +92,10 @@ const PatientDetail = () => {
   };
   
   const handleNewVisitInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setNewVisit(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
   
@@ -157,6 +158,7 @@ const PatientDetail = () => {
           diagnosis: '',
           prescription: '',
           notes: '',
+          xrayRequired: false,
         });
         setPatient(getPatient(id));
         toast({
@@ -437,6 +439,17 @@ const PatientDetail = () => {
                     />
                   </div>
                   
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">X-ray Required</label>
+                    <input
+                      type="checkbox"
+                      name="xrayRequired"
+                      checked={newVisit.xrayRequired}
+                      onChange={handleNewVisitInputChange}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  
                   <div className="flex justify-end gap-3 pt-2">
                     <button
                       onClick={() => {
@@ -521,31 +534,6 @@ const PatientDetail = () => {
                       </motion.div>
                     )}
                     
-                    {visit.images && visit.images.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="pt-2 space-y-4"
-                      >
-                        <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Images</h4>
-                        <div className="flex flex-wrap gap-3">
-                          {visit.images.map((img, idx) => (
-                            <div 
-                              key={idx} 
-                              className="w-24 h-24 rounded-lg border overflow-hidden"
-                            >
-                              <img 
-                                src={img} 
-                                alt={`Prescription ${idx + 1}`} 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
                   </AnimatePresence>
                 </motion.div>
               ))}

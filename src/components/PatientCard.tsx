@@ -11,6 +11,7 @@ interface PatientCardProps {
   sex: 'Male' | 'Female' | 'Other';
   lastVisit?: string;
   diagnosis?: string;
+  xrayRequired?: boolean;
   className?: string;
   index?: number;
 }
@@ -22,6 +23,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   sex,
   lastVisit,
   diagnosis,
+  xrayRequired,
   className,
   index = 0
 }) => {
@@ -64,6 +66,11 @@ const PatientCard: React.FC<PatientCardProps> = ({
             </p>
           )}
         </div>
+        {xrayRequired && (
+          <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-full">
+            X-ray
+          </span>
+        )}
       </div>
     </motion.div>
   );
