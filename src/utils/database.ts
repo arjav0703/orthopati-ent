@@ -67,6 +67,7 @@ export const initDatabase = async () => {
         diagnosis TEXT,
         prescription TEXT,
         notes TEXT,
+        xrayRequired BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE
       )
     `);

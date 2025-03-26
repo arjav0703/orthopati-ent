@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { 
   ChevronLeft, User, Calendar, Plus, Edit, 
-  Trash2, Camera, X, Save, FileText 
+  Trash2, X, Save, FileText 
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { usePatients, Visit, Patient } from '@/utils/patientStore';
@@ -34,12 +34,8 @@ const PatientDetail = () => {
     diagnosis: '',
     prescription: '',
     notes: '',
-    images: [],
+    xrayRequired: false,
   });
-  
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [selectedVisitIndex, setSelectedVisitIndex] = useState<number | null>(null);
   
   useEffect(() => {
     async function loadPatient() {
@@ -96,10 +92,10 @@ const PatientDetail = () => {
   };
   
   const handleNewVisitInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setNewVisit(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
   
@@ -162,9 +158,8 @@ const PatientDetail = () => {
           diagnosis: '',
           prescription: '',
           notes: '',
-          images: [],
+          xrayRequired: false,
         });
-        setCapturedImage(null);
         setPatient(getPatient(id));
         toast({
           title: "Success",
@@ -178,33 +173,6 @@ const PatientDetail = () => {
         });
       }
     }
-  };
-  
-  // Camera functionality
-  const handleCameraCapture = () => {
-    // In a real application, this would use the device camera
-    // For now, we'll simulate adding an image
-    const simulatedImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM4ODgiPlByZXNjcmlwdGlvbiBJbWFnZTwvdGV4dD48L3N2Zz4=";
-    
-    setCapturedImage(simulatedImage);
-    setIsCameraActive(false);
-    
-    if (newVisit.images) {
-      setNewVisit({
-        ...newVisit,
-        images: [...newVisit.images, simulatedImage]
-      });
-    } else {
-      setNewVisit({
-        ...newVisit,
-        images: [simulatedImage]
-      });
-    }
-    
-    toast({
-      title: "Image Captured",
-      description: "Prescription image has been added",
-    });
   };
   
   return (
@@ -419,8 +387,6 @@ const PatientDetail = () => {
                     <button 
                       onClick={() => {
                         setIsAddingVisit(false);
-                        setCapturedImage(null);
-                        setIsCameraActive(false);
                       }}
                       className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                     >
@@ -473,75 +439,21 @@ const PatientDetail = () => {
                     />
                   </div>
                   
-                  {/* Prescription Images */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Prescription Images</label>
-                    
-                    <div className="flex flex-wrap gap-3">
-                      {newVisit.images && newVisit.images.map((img, idx) => (
-                        <div 
-                          key={idx} 
-                          className="relative w-24 h-24 rounded-lg border overflow-hidden"
-                        >
-                          <img 
-                            src={img} 
-                            alt={`Prescription ${idx + 1}`} 
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            onClick={() => {
-                              const updatedImages = [...(newVisit.images || [])];
-                              updatedImages.splice(idx, 1);
-                              setNewVisit({
-                                ...newVisit,
-                                images: updatedImages
-                              });
-                            }}
-                            className="absolute top-1 right-1 p-1 bg-background/80 rounded-full text-foreground hover:bg-background transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                      
-                      {isCameraActive ? (
-                        <div className="w-full rounded-lg border p-4 text-center">
-                          <div className="bg-muted h-[200px] mb-3 rounded-lg flex items-center justify-center">
-                            <div className="text-muted-foreground">Camera Preview</div>
-                          </div>
-                          <div className="flex justify-center gap-3">
-                            <button
-                              onClick={handleCameraCapture}
-                              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all-medium"
-                            >
-                              Capture
-                            </button>
-                            <button
-                              onClick={() => setIsCameraActive(false)}
-                              className="px-4 py-2 border rounded-lg hover:bg-secondary transition-all-medium"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setIsCameraActive(true)}
-                          className="w-24 h-24 flex flex-col items-center justify-center gap-1 rounded-lg border text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all-medium"
-                        >
-                          <Camera size={20} />
-                          <span className="text-xs">Add Image</span>
-                        </button>
-                      )}
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">X-ray Required</label>
+                    <input
+                      type="checkbox"
+                      name="xrayRequired"
+                      checked={newVisit.xrayRequired}
+                      onChange={handleNewVisitInputChange}
+                      className="w-4 h-4"
+                    />
                   </div>
                   
                   <div className="flex justify-end gap-3 pt-2">
                     <button
                       onClick={() => {
                         setIsAddingVisit(false);
-                        setCapturedImage(null);
-                        setIsCameraActive(false);
                       }}
                       className="px-4 py-2 rounded-lg border hover:bg-secondary transition-all-medium"
                     >
@@ -567,12 +479,10 @@ const PatientDetail = () => {
                   key={visit.id}
                   className={cn(
                     "glass border rounded-xl p-5 shadow-subtle transition-all duration-300",
-                    selectedVisitIndex === index ? "ring-2 ring-primary/40" : "",
                   )}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
-                  onClick={() => setSelectedVisitIndex(selectedVisitIndex === index ? null : index)}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -592,7 +502,7 @@ const PatientDetail = () => {
                   </div>
                   
                   <AnimatePresence>
-                    {selectedVisitIndex === index && (
+                    {visit.prescription && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -600,47 +510,30 @@ const PatientDetail = () => {
                         transition={{ duration: 0.2 }}
                         className="pt-2 space-y-4"
                       >
-                        {visit.prescription && (
-                          <div>
-                            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">Prescription</h4>
-                            <div className="bg-secondary/50 p-3 rounded-lg">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FileText size={16} className="text-muted-foreground" />
-                                <span className="font-medium">Prescription Details</span>
-                              </div>
-                              <p className="text-sm whitespace-pre-line">{visit.prescription}</p>
-                            </div>
+                        <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">Prescription</h4>
+                        <div className="bg-secondary/50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText size={16} className="text-muted-foreground" />
+                            <span className="font-medium">Prescription Details</span>
                           </div>
-                        )}
-                        
-                        {visit.notes && (
-                          <div>
-                            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">Notes</h4>
-                            <p className="text-sm">{visit.notes}</p>
-                          </div>
-                        )}
-                        
-                        {visit.images && visit.images.length > 0 && (
-                          <div>
-                            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">Images</h4>
-                            <div className="flex flex-wrap gap-3">
-                              {visit.images.map((img, idx) => (
-                                <div 
-                                  key={idx} 
-                                  className="w-24 h-24 rounded-lg border overflow-hidden"
-                                >
-                                  <img 
-                                    src={img} 
-                                    alt={`Prescription ${idx + 1}`} 
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                          <p className="text-sm whitespace-pre-line">{visit.prescription}</p>
+                        </div>
                       </motion.div>
                     )}
+                    
+                    {visit.notes && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="pt-2 space-y-4"
+                      >
+                        <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">Notes</h4>
+                        <p className="text-sm">{visit.notes}</p>
+                      </motion.div>
+                    )}
+                    
                   </AnimatePresence>
                 </motion.div>
               ))}

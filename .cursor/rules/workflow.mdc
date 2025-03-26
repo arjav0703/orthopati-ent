@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Workflow of the application
+
+## step 1
+when a patient arrives at the clinic, the doctor's assistant askes the patient for general details like name, sex, age, and the problem they are facing.
+## step 2
+Then, when the patient goes to the doctor, the doctor looks up at the assistant's details stored n the application and suggests medications and other notes.
+## step 3
+If the patient requires an X-ray, there has to be an toggle option for the doctor to mark as z-ray required.
+
+## step 4
+After the x ray is done, there must be an option to upload a PDF or an image of the xray. 
+
+## step5 
+further more, the doctor must be able to choose medication from a premade list of medications in form of a drop down menu and the frequency of medication from a drop down menu (example: 2 times a day, once a day, once a week etc.)

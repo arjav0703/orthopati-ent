@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,6 +20,7 @@ export interface Visit {
   diagnosis?: string;
   prescription?: string;
   notes?: string;
+  xrayRequired: boolean;
   images?: string[]; // Base64 encoded images
 }
 

@@ -1,6 +1,4 @@
-
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -12,6 +10,7 @@ import Search from "./pages/Search";
 import Appointments from "./pages/Appointments";
 import PatientDetail from "./pages/PatientDetail";
 import NotFound from "./pages/NotFound";
+import { Spinner } from "@/components/ui/spinner";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +53,7 @@ const App = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <Spinner className="h-12 w-12 mx-auto mb-4" />
           <p className="text-lg font-medium">Connecting to server...</p>
         </div>
       </div>
@@ -66,7 +65,6 @@ const App = () => {
       <TooltipProvider>
         <PatientProvider>
           <Toaster />
-          <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
