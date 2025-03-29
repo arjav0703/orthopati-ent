@@ -11,8 +11,9 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Add body parser middleware
-app.use(express.json());
+// Add body parser middleware with increased size limits
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Database configuration matching docker-compose.yml exactly
 const dbConfig = {
@@ -63,6 +64,9 @@ const initDatabase = async () => {
         prescription TEXT,
         notes TEXT,
         xrayRequired BOOLEAN DEFAULT FALSE,
+        fileData LONGTEXT,
+        fileName VARCHAR(255),
+        fileType VARCHAR(100),
         FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE
       )
     `);
@@ -232,12 +236,12 @@ app.delete('/api/patients/:id', async (req, res) => {
 app.post('/api/patients/:patientId/visits', async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { date, diagnosis, prescription, notes, xrayRequired, images } = req.body;
+    const { date, diagnosis, prescription, notes, xrayRequired, images, fileData, fileName, fileType } = req.body;
     const visitId = uuidv4();
     
     await pool.execute(
-      'INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [visitId, patientId, new Date(date), diagnosis || null, prescription || null, notes || null, xrayRequired || false]
+      'INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired, fileData, fileName, fileType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [visitId, patientId, new Date(date), diagnosis || null, prescription || null, notes || null, xrayRequired || false, fileData || null, fileName || null, fileType || null]
     );
     
     // Add images if present
@@ -296,6 +300,31 @@ app.get('/api/search', async (req, res) => {
   } catch (error) {
     console.error('Error searching patients:', error);
     res.status(500).json({ error: 'Failed to search patients' });
+  }
+});
+
+// Add endpoint to download visit file
+app.get('/api/visits/:visitId/file', async (req, res) => {
+  try {
+    const { visitId } = req.params;
+    const [visits] = await pool.execute('SELECT fileData, fileName, fileType FROM visits WHERE id = ?', [visitId]);
+    
+    if (visits.length === 0 || !visits[0].fileData) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    const { fileData, fileName, fileType } = visits[0];
+    
+    // Set appropriate headers for file download
+    res.setHeader('Content-Type', fileType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    
+    // Send base64 decoded file data
+    const buffer = Buffer.from(fileData, 'base64');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({ error: 'Failed to download file' });
   }
 });
 

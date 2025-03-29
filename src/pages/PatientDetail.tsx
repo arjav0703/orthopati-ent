@@ -35,6 +35,9 @@ const PatientDetail = () => {
     prescription: '',
     notes: '',
     xrayRequired: false,
+    fileData: null,
+    fileName: '',
+    fileType: '',
   });
   
   useEffect(() => {
@@ -99,6 +102,26 @@ const PatientDetail = () => {
     }));
   };
   
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Remove data:application/pdf;base64, prefix
+        const fileData = base64String.split(',')[1];
+        setNewVisit(prev => ({
+          ...prev,
+          fileData,
+          fileName: file.name,
+          fileType: file.type
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
   const handleSaveEdit = () => {
     if (id) {
       const success = updatePatient(id, editedData);
@@ -159,6 +182,9 @@ const PatientDetail = () => {
           prescription: '',
           notes: '',
           xrayRequired: false,
+          fileData: null,
+          fileName: '',
+          fileType: '',
         });
         setPatient(getPatient(id));
         toast({
@@ -450,6 +476,18 @@ const PatientDetail = () => {
                     />
                   </div>
                   
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Upload File</label>
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      className="w-full p-3 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
+                    />
+                    {newVisit.fileName && (
+                      <p className="text-sm text-muted-foreground">Selected file: {newVisit.fileName}</p>
+                    )}
+                  </div>
+                  
                   <div className="flex justify-end gap-3 pt-2">
                     <button
                       onClick={() => {
@@ -534,6 +572,18 @@ const PatientDetail = () => {
                       </motion.div>
                     )}
                     
+                    {visit.fileName && (
+                      <div className="pt-2">
+                        <a
+                          href={`/api/visits/${visit.id}/file`}
+                          download={visit.fileName}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-all-medium"
+                        >
+                          <FileText size={16} />
+                          <span>Download {visit.fileName}</span>
+                        </a>
+                      </div>
+                    )}
                   </AnimatePresence>
                 </motion.div>
               ))}
