@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { toast } from "./components/ui/use-toast";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
-import Appointments from "./pages/Appointments";
 import PatientDetail from "./pages/PatientDetail";
 import NotFound from "./pages/NotFound";
 import { Spinner } from "@/components/ui/spinner";
@@ -21,7 +20,7 @@ const App = () => {
     // Check if the server is reachable
     const checkServerConnection = async () => {
       try {
-        const response = await fetch('/api/patients');
+        const response = await fetch("/api/patients");
         if (response.ok) {
           toast({
             title: "Connected to server",
@@ -69,7 +68,6 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/search" element={<Search />} />
-              <Route path="/appointments" element={<Appointments />} />
               <Route path="/patient/:id" element={<PatientDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
