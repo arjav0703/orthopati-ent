@@ -18,6 +18,7 @@ const Search = () => {
   const initialQuery = queryParams.get("q") || "";
 
   const [query, setQuery] = useState(initialQuery);
+  const [baseResults, setBaseResults] = useState<Patient[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -32,10 +33,19 @@ const Search = () => {
   useEffect(() => {
     const initializeSearch = async () => {
       if (initialQuery) {
-        const results = await searchPatients(initialQuery);
-        setFilteredPatients(results);
+        try {
+          const results = await searchPatients(initialQuery);
+          setBaseResults(results);
+        } catch (error) {
+          toast({
+            title: "Search Error",
+            description: "Failed to search patients. Please try again.",
+            variant: "destructive",
+          });
+          setBaseResults([]);
+        }
       } else {
-        setFilteredPatients(patients);
+        setBaseResults(patients);
       }
     };
 
@@ -46,13 +56,13 @@ const Search = () => {
     setQuery(searchQuery);
 
     if (!searchQuery.trim()) {
-      setFilteredPatients(patients);
+      setBaseResults(patients);
       return;
     }
 
     try {
       const results = await searchPatients(searchQuery);
-      setFilteredPatients(results);
+      setBaseResults(results);
     } catch (error) {
       console.error("Search error:", error);
       toast({
@@ -70,8 +80,8 @@ const Search = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const applyFilters = async () => {
-    let results = query ? await searchPatients(query) : [...patients];
+  const applyFilters = () => {
+    let results = [...baseResults];
 
     if (filters.sex !== "all") {
       results = results.filter((patient) => patient.sex === filters.sex);
@@ -106,15 +116,12 @@ const Search = () => {
   };
 
   useEffect(() => {
-    const runFilters = async () => {
-      await applyFilters();
-    };
-    runFilters();
-  }, [filters, query, patients]);
+    applyFilters();
+  }, [filters, baseResults]);
 
   return (
     <Layout>
-      <div className="container max-w-6xl py-6 space-y-6 dark">
+      <div className="container max-w-6xl py-6 space-y-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">
             Patient Search
