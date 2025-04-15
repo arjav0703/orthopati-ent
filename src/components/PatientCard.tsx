@@ -1,14 +1,14 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, User, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { motion } from "framer-motion";
+import { Calendar, User, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface PatientCardProps {
   id: string;
   name: string;
   age: number;
-  sex: 'Male' | 'Female' | 'Other';
+  sex: "Male" | "Female" | "Other";
   lastVisit?: string;
   diagnosis?: string;
   xrayRequired?: boolean;
@@ -25,19 +25,19 @@ const PatientCard: React.FC<PatientCardProps> = ({
   diagnosis,
   xrayRequired,
   className,
-  index = 0
+  index = 0,
 }) => {
   return (
     <motion.div
       className={cn(
-        "group relative rounded-lg border bg-card p-3 sm:p-4 transition-all hover:shadow-md",
-        className
+        "group relative rounded-lg border dark:border-zinc-500 bg-card p-3 sm:p-4 transition-all hover:shadow-md",
+        className,
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Link to={`/patient/${id}`} className="absolute inset-0 z-10">
+      <Link to={`/patient/${id}`} className="absolute">
         <span className="sr-only">View patient details</span>
       </Link>
 

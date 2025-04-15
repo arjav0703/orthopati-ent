@@ -120,13 +120,13 @@ const Search = () => {
   }, [filters, baseResults]);
 
   return (
-    <Layout>
+    <Layout className="dark:bg-zinc-800 dark:text-white dark:min-h-screen">
       <div className="container max-w-6xl py-6 space-y-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             Patient Search
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground dark:text-zinc-300">
             Search through {patients.length.toLocaleString()} patient records
           </p>
         </div>
@@ -142,13 +142,13 @@ const Search = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="text-muted-foreground"
+              className="dark:text-zinc-200 dark:border-zinc-400"
             >
               <Filter size={14} className="mr-2" />
               Filters
             </Button>
 
-            <Badge variant="secondary" className="ml-auto">
+            <Badge variant="secondary" className="ml-auto ">
               {filteredPatients.length} results
             </Badge>
           </div>
@@ -162,7 +162,7 @@ const Search = () => {
                     name="sex"
                     value={filters.sex}
                     onChange={handleFilterChange}
-                    className="w-full p-2 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
+                    className="w-full p-2 rounded-lg border dark:border-zinc-500 bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
                   >
                     <option value="all">All</option>
                     <option value="Male">Male</option>
@@ -172,7 +172,7 @@ const Search = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 ">
                     Min Age
                   </label>
                   <input
@@ -182,7 +182,7 @@ const Search = () => {
                     onChange={handleFilterChange}
                     placeholder="Min"
                     min="0"
-                    className="w-full p-2 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
+                    className="w-full p-2 rounded-lg dark:border-zinc-500 border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
                   />
                 </div>
 
@@ -197,7 +197,7 @@ const Search = () => {
                     onChange={handleFilterChange}
                     placeholder="Max"
                     min="0"
-                    className="w-full p-2 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
+                    className="w-full p-2 rounded-lg dark:border-zinc-500 border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
                   />
                 </div>
 
@@ -209,7 +209,7 @@ const Search = () => {
                     name="sortBy"
                     value={filters.sortBy}
                     onChange={handleFilterChange}
-                    className="w-full p-2 rounded-lg border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
+                    className="w-full p-2 rounded-lg dark:border-zinc-500 border bg-transparent focus:ring-2 focus:ring-primary/40 outline-none transition-all duration-200"
                   >
                     <option value="name">Name (A-Z)</option>
                     <option value="age">Age</option>

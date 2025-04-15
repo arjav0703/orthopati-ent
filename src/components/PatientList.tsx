@@ -1,21 +1,24 @@
-import React from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import PatientCard from './PatientCard';
-import { Patient } from '@/utils/patientStore';
+import React from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import PatientCard from "./PatientCard";
+import { Patient } from "@/utils/patientStore";
 
 interface PatientListProps {
   patients: Patient[];
   containerClassName?: string;
 }
 
-const PatientList: React.FC<PatientListProps> = ({ patients, containerClassName }) => {
+const PatientList: React.FC<PatientListProps> = ({
+  patients,
+  containerClassName,
+}) => {
   const parentRef = React.useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
     count: patients.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 100, // Estimated height of each patient card
-    overscan: 5
+    overscan: 5,
   });
 
   return (
@@ -23,15 +26,15 @@ const PatientList: React.FC<PatientListProps> = ({ patients, containerClassName 
       ref={parentRef}
       className={containerClassName}
       style={{
-        height: '100%',
-        overflow: 'auto'
+        height: "100%",
+        overflow: "auto",
       }}
     >
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative'
+          width: "100%",
+          position: "relative",
         }}
       >
         {virtualizer.getVirtualItems().map((virtualItem) => {
@@ -40,12 +43,12 @@ const PatientList: React.FC<PatientListProps> = ({ patients, containerClassName 
             <div
               key={patient.id}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: '100%',
+                width: "100%",
                 height: `${virtualItem.size}px`,
-                transform: `translateY(${virtualItem.start}px)`
+                transform: `translateY(${virtualItem.start}px)`,
               }}
             >
               <PatientCard
@@ -54,9 +57,12 @@ const PatientList: React.FC<PatientListProps> = ({ patients, containerClassName 
                 age={patient.age}
                 sex={patient.sex}
                 diagnosis={patient.diagnosis}
-                lastVisit={patient.visits.length > 0 ? 
-                  new Date(patient.visits[patient.visits.length - 1].date).toLocaleDateString() : 
-                  new Date(patient.createdAt).toLocaleDateString()
+                lastVisit={
+                  patient.visits.length > 0
+                    ? new Date(
+                        patient.visits[patient.visits.length - 1].date,
+                      ).toLocaleDateString()
+                    : new Date(patient.createdAt).toLocaleDateString()
                 }
                 index={virtualItem.index}
               />
@@ -68,4 +74,4 @@ const PatientList: React.FC<PatientListProps> = ({ patients, containerClassName 
   );
 };
 
-export default PatientList; 
+export default PatientList;

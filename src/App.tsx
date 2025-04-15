@@ -10,6 +10,8 @@ import Search from "./pages/Search";
 import PatientDetail from "./pages/PatientDetail";
 import NotFound from "./pages/NotFound";
 import { Spinner } from "@/components/ui/spinner";
+import { ThemeProvider } from "./components/themeprovider";
+import { Theater } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -60,21 +62,23 @@ const App = () => {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <PatientProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/patient/:id" element={<PatientDetail />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </PatientProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <PatientProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/patient/:id" element={<PatientDetail />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </PatientProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
