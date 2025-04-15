@@ -114,7 +114,7 @@ const Search = () => {
 
   return (
     <Layout>
-      <div className="container max-w-6xl py-6 space-y-6">
+      <div className="container max-w-6xl py-6 space-y-6 dark">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">
             Patient Search
