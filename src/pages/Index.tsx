@@ -14,6 +14,7 @@ import { usePatients } from "@/utils/patientStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -37,19 +38,29 @@ const Index = () => {
       <div className="max-w-7xl mx-auto space-y-6 pt-4 sm:pt-6 dark:bg-zinc-800 dark:text-white">
         {/* Header Section - More compact on mobile */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1">
-              Manage your patients and appointments
-            </p>
-          </div>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto border dark:bg-zinc-700 dark:hover:bg-zinc-800"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Patient
-          </Button>
+          <nav className="flex justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                Manage your patients and appointments
+              </p>
+            </div>
+            <div className="sm:hidden">
+              <ModeToggle />
+            </div>
+          </nav>
+          <span className="flex gap-2">
+            <div className="hidden md:block">
+              <ModeToggle />
+            </div>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="w-full sm:w-auto border dark:bg-zinc-700 dark:hover:bg-zinc-800"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Patient
+            </Button>
+          </span>
         </div>
 
         {/* Quick Actions - Stack on mobile */}
