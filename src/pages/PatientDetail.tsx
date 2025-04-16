@@ -226,7 +226,7 @@ const PatientDetail = () => {
         <header className="mb-8 flex justify-between items-center">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap- hover:text-foreground transition-colors hover:text-green-400"
+            className="flex items-center hover:text-emerald-700 dark:hover:text-green-400"
           >
             <ChevronLeft size={18} />
             <span className="">Back</span>
@@ -237,7 +237,7 @@ const PatientDetail = () => {
               <>
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-secondary hover:text-green-400"
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg hover:text-emerald-700 dark:hover:text-green-400"
                 >
                   <Edit size={16} />
                   <span>Edit</span>
@@ -263,7 +263,7 @@ const PatientDetail = () => {
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="flex items-center gap-1 px-3 py-2 rounded-lg   hover:text-green-400"
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg dark:hover:text-green-400 hover:text-emerald-700"
                 >
                   <Save size={16} />
                   <span>Save</span>
