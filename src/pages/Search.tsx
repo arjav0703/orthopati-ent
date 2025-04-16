@@ -142,7 +142,7 @@ const Search = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="dark:text-zinc-200 dark:border-zinc-400 border-green-500 bg-green-400 hover:brightness-125 dark:bg-green-600"
+              className="dark:text-white dark:border-zinc-400 border-green-500 bg-green-400 hover:brightness-125 dark:bg-green-600"
             >
               <Filter size={14} className="mr-2" />
               Filters

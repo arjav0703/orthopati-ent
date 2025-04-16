@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -9,14 +9,14 @@ interface SearchBarProps {
   className?: string;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  onSearch, 
+const SearchBar: React.FC<SearchBarProps> = ({
+  onSearch,
   placeholder = "Search patients...",
-  className 
+  className,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query);
@@ -31,11 +31,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, [query, onSearch]);
 
   return (
-    <motion.div 
+    <motion.div
       className={cn(
         "w-full relative glass rounded-xl shadow-subtle",
-        isFocused && "ring-2 ring-primary/40",
-        className
+        isFocused && "ring-2 ring-green-600 ",
+        className,
       )}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
