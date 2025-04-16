@@ -1,0 +1,17 @@
+services:
+  web-interface:
+    build: .
+    ports:
+      - "80:80"
+
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: cli_pat
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+
+    ports:
+      - "3306:3306"
