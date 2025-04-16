@@ -55,7 +55,7 @@ const Index = () => {
             </div>
             <Button
               onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto border dark:hover:bg-zinc-800"
+              className="w-full sm:w-auto border dark:hover:bg-green-800 hover:bg-green-400"
             >
               <Plus className="mr-2 h-4 w-4" />
               New Patient
@@ -98,7 +98,7 @@ const Index = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/search")}
-            className="text-sm sm:text-base"
+            className="text-sm sm:text-base hover:underline hover:text-green-600"
           >
             View all
             <ChevronRight size={16} className="ml-1" />
