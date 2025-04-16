@@ -13,7 +13,7 @@ current tested on Linux (arch btw)
     - Install Docker (https://docs.docker.com/engine/install/)
     - Clone the Repository
     - run `docker compose up` to start the application
-  - ### Nodejs
+  - ### Nodejs (not reccomended on windows)
     #### Setup Node
       - Install Nodejs (https://nodejs.org/en/download/)
       - Clone the Repository
