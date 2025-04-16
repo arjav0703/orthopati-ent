@@ -55,7 +55,7 @@ const Index = () => {
             </div>
             <Button
               onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto border dark:bg-zinc-700 dark:hover:bg-zinc-800"
+              className="w-full sm:w-auto border dark:hover:bg-zinc-800"
             >
               <Plus className="mr-2 h-4 w-4" />
               New Patient

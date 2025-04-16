@@ -49,7 +49,7 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.age || !formData.sex || !formData.contact) {
+    if (!formData.name || !formData.age || !formData.sex) {
       toast({
         title: "Missing Information",
         description: "Please fill all required fields",
@@ -78,9 +78,11 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] dark:text-white dark:bg-black">
+      <DialogContent className="sm:max-w-[425px] dark:text-white dark:bg-black bg-white">
         <DialogHeader>
-          <DialogTitle>Add New Patient</DialogTitle>
+          <DialogTitle className="text-green-600 dark:text-green-200">
+            Add New Patient
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -180,7 +182,12 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
           </div>
 
           <DialogFooter>
-            <Button type="submit">Save Patient</Button>
+            <Button
+              type="submit"
+              className="border bg-green-700 hover:brightness-125"
+            >
+              Save Patient
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
