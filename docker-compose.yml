@@ -3,6 +3,9 @@ services:
     build: .
     ports:
       - "80:80"
+    networks:
+      high-table:
+        ipv4_address: 10.0.0.3
 
   db:
     image: mariadb:latest
@@ -15,3 +18,14 @@ services:
 
     ports:
       - "3306:3306"
+    networks:
+      high-table:
+        ipv4_address: 10.0.0.4
+
+networks:
+  high-table:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/16
+          gateway: 10.0.0.1
