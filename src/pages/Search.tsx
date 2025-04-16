@@ -120,7 +120,7 @@ const Search = () => {
   }, [filters, baseResults]);
 
   return (
-    <Layout className="dark:bg-zinc-800 dark:text-white dark:min-h-screen">
+    <Layout className="dark:bg-zinc-800 dark:text-white dark:min-h-screen bg-green-100">
       <div className="container max-w-6xl py-6 space-y-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -142,7 +142,7 @@ const Search = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="dark:text-zinc-200 dark:border-zinc-400"
+              className="dark:text-zinc-200 dark:border-zinc-400 border-green-500 bg-green-400 hover:brightness-125 dark:bg-green-600"
             >
               <Filter size={14} className="mr-2" />
               Filters

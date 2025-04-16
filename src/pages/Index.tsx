@@ -34,7 +34,7 @@ const Index = () => {
   };
 
   return (
-    <Layout className="dark:bg-zinc-800 min-h-screen">
+    <Layout className="dark:bg-zinc-800 min-h-screen bg-green-100 ">
       <div className="max-w-7xl mx-auto space-y-6 pt-4 sm:pt-6 dark:bg-zinc-800 dark:text-white">
         {/* Header Section - More compact on mobile */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

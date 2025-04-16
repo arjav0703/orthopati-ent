@@ -30,7 +30,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   return (
     <motion.div
       className={cn(
-        "group relative rounded-lg border dark:border-zinc-500 bg-card p-3 sm:p-4 transition-all hover:shadow-md",
+        "group relative rounded-lg border dark:border-zinc-500 bg-card p-3 sm:p-4 transition-all hover:shadow-md text-zinc-800 dark:text-zinc-300",
         className,
       )}
       initial={{ opacity: 0, y: 20 }}
@@ -44,7 +44,9 @@ const PatientCard: React.FC<PatientCardProps> = ({
       <div className="flex items-start gap-3 sm:gap-4">
         <div className="flex-1 space-y-1">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm sm:text-base">{name}</h3>
+            <h3 className="font-medium text-sm sm:text-base text-black dark:text-white">
+              {name}
+            </h3>
           </div>
 
           <div className="flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
