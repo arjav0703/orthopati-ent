@@ -414,7 +414,7 @@ const PatientDetail = () => {
             {!isAddingVisit && (
               <button
                 onClick={() => setIsAddingVisit(true)}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg  text-primary-foreground border hover:text-emerald-400 "
+                className="flex items-center gap-1 px-3 py-2 rounded-lg  text-primary-foreground border dark:hover:text-emerald-400 hover:text-emerald-700"
               >
                 <Plus size={16} />
                 <span>Add Visit</span>
@@ -634,7 +634,7 @@ const PatientDetail = () => {
               <p className="text-muted-foreground mb-4">No visit records yet</p>
               <button
                 onClick={() => setIsAddingVisit(true)}
-                className="inline-flex items-center gap-2 text-primary font-medium hover:underline hover:text-green-400"
+                className="inline-flex items-center gap-2 text-primary font-medium hover:underline dark:hover:text-green-400 hover:text-emerald-700"
               >
                 <Plus size={18} />
                 <span>Add first visit record</span>
