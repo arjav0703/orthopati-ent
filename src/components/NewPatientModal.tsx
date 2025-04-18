@@ -158,7 +158,7 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="diagnosis">Initial Diagnosis</Label>
+            <Label htmlFor="diagnosis">Diagnosis</Label>
             <Input
               id="diagnosis"
               value={formData.diagnosis}
@@ -170,7 +170,7 @@ const NewPatientModal = ({ isOpen, onClose, onSave }: NewPatientModalProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">Patient history</Label>
             <Textarea
               id="notes"
               value={formData.notes}
