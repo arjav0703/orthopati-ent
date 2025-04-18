@@ -1,5 +1,3 @@
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
@@ -14,6 +12,7 @@ import {
   X,
   Save,
   FileText,
+  Printer,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { usePatients, Visit, Patient } from "@/utils/patientStore";
@@ -21,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
+import generatePDF from "@/components/pdfgenerator";
 
 const PatientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,32 +52,6 @@ const PatientDetail = () => {
   });
 
   const pageRef = useRef<HTMLDivElement>(null);
-
-  function generatePDF() {
-    if (!pageRef.current) return;
-
-    // Temporarily apply light mode styles
-    const originalClassName = document.documentElement.className;
-    document.documentElement.className = originalClassName.replace("dark", "");
-
-    html2canvas(pageRef.current, {
-      scale: 2,
-      backgroundColor: "#ffffff", // Ensure a white background for the PDF
-    })
-      .then((canvas) => {
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save("patient-detail.pdf");
-      })
-      .finally(() => {
-        // Revert to the original class name (restore dark mode if it was active)
-        document.documentElement.className = originalClassName;
-      });
-  }
 
   useEffect(() => {
     async function loadPatient() {
@@ -253,8 +227,7 @@ const PatientDetail = () => {
 
   return (
     <Layout className=" bg-green-100 dark:bg-zinc-800 dark:text-white min-h-screen">
-      <Button onClick={generatePDF}>pdf</Button>
-      <div ref={pageRef} className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header with back button and actions */}
         <header className="mb-8 flex justify-between items-center">
           <button
@@ -268,6 +241,13 @@ const PatientDetail = () => {
           <div className="flex gap-2">
             {!isEditMode && (
               <>
+                <button
+                  onClick={() => generatePDF(patient)}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg hover:text-emerald-700 dark:hover:text-green-400"
+                >
+                  <Printer size={16} />
+                  <span>PDF</span>
+                </button>
                 <button
                   onClick={() => setIsEditMode(true)}
                   className="flex items-center gap-1 px-3 py-2 rounded-lg hover:text-emerald-700 dark:hover:text-green-400"
