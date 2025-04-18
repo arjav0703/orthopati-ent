@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
 import generatePDF from "@/components/pdfgenerator";
+import Medication from "@/components/medication";
 
 const PatientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,6 +50,7 @@ const PatientDetail = () => {
     fileData: null,
     fileName: "",
     fileType: "",
+    medications: [],
   });
 
   const pageRef = useRef<HTMLDivElement>(null);
@@ -483,6 +485,19 @@ const PatientDetail = () => {
                     </div>
                   </div>
 
+                  <div className="space-y-1.5 flex gap-7 items-center">
+                    <label className="text-sm font-medium">Medications</label>
+                    <Medication
+                      value={newVisit.medications}
+                      onChange={(selectedMedications) =>
+                        setNewVisit((prev) => ({
+                          ...prev,
+                          medications: selectedMedications,
+                        }))
+                      }
+                    />
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium">Prescription</label>
                     <textarea
@@ -595,6 +610,52 @@ const PatientDetail = () => {
                             Prescription
                           </h4>
                           <div className="bg-secondary/50 p-3 rounded-lg">
+                            {(() => {
+                              let medicationsArray = [];
+                              try {
+                                medicationsArray =
+                                  typeof visit.medications === "string"
+                                    ? JSON.parse(visit.medications)
+                                    : visit.medications;
+                              } catch (error) {
+                                console.error(
+                                  "Failed to parse medications:",
+                                  error,
+                                );
+                              }
+
+                              return Array.isArray(medicationsArray) &&
+                                medicationsArray.length > 0 ? (
+                                <div className="pt-2 space-y-4">
+                                  <h4 className="text-sm uppercase tracking-wide mb-1">
+                                    Medications
+                                  </h4>
+                                  <div className="bg-secondary/50 p-3 rounded-lg">
+                                    {medicationsArray.map(
+                                      (medication, index) => (
+                                        <div
+                                          key={index}
+                                          className="flex items-center gap-2 mb-2"
+                                        >
+                                          <FileText
+                                            size={16}
+                                            className="text-muted-foreground"
+                                          />
+                                          <span className="font-medium">
+                                            {medication}
+                                          </span>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  No medications recorded
+                                </p>
+                              );
+                            })()}
+
                             <div className="flex items-center gap-2 mb-2">
                               <FileText
                                 size={16}

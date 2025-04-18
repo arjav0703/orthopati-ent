@@ -4,44 +4,43 @@ import { dirname, join } from "path";
 import mysql from "mysql2/promise";
 import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
-import fs from "fs";
 import path from "path";
 
 const app = express();
 
-function authentication(req, res, next) {
-  const authheader = req.headers.authorization;
-  console.log(req.headers);
+// function authentication(req, res, next) {
+//   const authheader = req.headers.authorization;
+//   console.log(req.headers);
 
-  if (!authheader) {
-    let err = new Error("You are not authenticated!");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
-    return next(err);
-  }
+//   if (!authheader) {
+//     let err = new Error("You are not authenticated!");
+//     res.setHeader("WWW-Authenticate", "Basic");
+//     err.status = 401;
+//     return next(err);
+//   }
 
-  const auth = new Buffer.from(authheader.split(" ")[1], "base64")
-    .toString()
-    .split(":");
-  const user = auth[0];
-  const pass = auth[1];
+//   const auth = new Buffer.from(authheader.split(" ")[1], "base64")
+//     .toString()
+//     .split(":");
+//   const user = auth[0];
+//   const pass = auth[1];
 
-  if (user == "admin" && pass == "password") {
-    // If Authorized user
-    next();
-  } else {
-    let err = new Error("You are not authenticated!");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
-    return next(err);
-  }
-}
+//   if (user == "admin" && pass == "password") {
+//     // If Authorized user
+//     next();
+//   } else {
+//     let err = new Error("You are not authenticated!");
+//     res.setHeader("WWW-Authenticate", "Basic");
+//     err.status = 401;
+//     return next(err);
+//   }
+// }
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // First step is the authentication of the client
-app.use(authentication);
+// app.use(authentication);
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 80;
@@ -96,6 +95,7 @@ const initDatabase = async () => {
         patientId VARCHAR(36) NOT NULL,
         date TIMESTAMP NOT NULL,
         diagnosis TEXT,
+        medications TEXT,
         prescription TEXT,
         notes TEXT,
         xrayRequired BOOLEAN DEFAULT FALSE,
@@ -300,11 +300,12 @@ app.post("/api/patients/:patientId/visits", async (req, res) => {
       fileData,
       fileName,
       fileType,
+      medications,
     } = req.body;
     const visitId = uuidv4();
 
     await pool.execute(
-      "INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired, fileData, fileName, fileType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired, fileData, fileName, fileType, medications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         visitId,
         patientId,
@@ -316,6 +317,7 @@ app.post("/api/patients/:patientId/visits", async (req, res) => {
         fileData || null,
         fileName || null,
         fileType || null,
+        JSON.stringify(medications), // Convert medications array to JSON
       ],
     );
 
@@ -368,6 +370,7 @@ app.get("/api/search", async (req, res) => {
             return {
               ...visit,
               date: new Date(visit.date).toISOString(),
+              medications: JSON.parse(visit.medications || "[]"), // Parse medications JSON
               images: images.map((img) => img.imageData),
             };
           }),
