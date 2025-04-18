@@ -4,11 +4,46 @@ import { dirname, join } from "path";
 import mysql from "mysql2/promise";
 import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
+import fs from "fs";
+import path from "path";
+
+const app = express();
+
+function authentication(req, res, next) {
+  const authheader = req.headers.authorization;
+  console.log(req.headers);
+
+  if (!authheader) {
+    let err = new Error("You are not authenticated!");
+    res.setHeader("WWW-Authenticate", "Basic");
+    err.status = 401;
+    return next(err);
+  }
+
+  const auth = new Buffer.from(authheader.split(" ")[1], "base64")
+    .toString()
+    .split(":");
+  const user = auth[0];
+  const pass = auth[1];
+
+  if (user == "admin" && pass == "password") {
+    // If Authorized user
+    next();
+  } else {
+    let err = new Error("You are not authenticated!");
+    res.setHeader("WWW-Authenticate", "Basic");
+    err.status = 401;
+    return next(err);
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const app = express();
+// First step is the authentication of the client
+app.use(authentication);
+app.use(express.static(path.join(__dirname, "public")));
+
 const PORT = process.env.PORT || 80;
 
 // Add body parser middleware with increased size limits
