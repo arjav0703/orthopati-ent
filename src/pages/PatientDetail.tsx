@@ -604,7 +604,7 @@ const PatientDetail = () => {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.2 }}
-                          className="pt-2 space-y-4"
+                          className="pt-2 space-y-1"
                         >
                           <h4 className="text-sm uppercase tracking-wide mb-1">
                             Prescription
@@ -626,7 +626,7 @@ const PatientDetail = () => {
 
                               return Array.isArray(medicationsArray) &&
                                 medicationsArray.length > 0 ? (
-                                <div className="pt-2 space-y-4">
+                                <div className="pt-2 space-y-1">
                                   <h4 className="text-sm uppercase tracking-wide mb-1">
                                     Medications
                                   </h4>
@@ -655,16 +655,6 @@ const PatientDetail = () => {
                                 </p>
                               );
                             })()}
-
-                            <div className="flex items-center gap-2 mb-2">
-                              <FileText
-                                size={16}
-                                className="text-muted-foreground"
-                              />
-                              <span className="font-medium">
-                                Prescription Details
-                              </span>
-                            </div>
                             <p className="text-sm whitespace-pre-line">
                               {visit.prescription}
                             </p>
