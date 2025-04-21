@@ -11,6 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import PatientList from "@/components/PatientList";
 import EmptyState from "@/components/EmptyState";
 import { toast } from "@/components/ui/use-toast";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 const Search = () => {
   const location = useLocation();
@@ -25,8 +33,10 @@ const Search = () => {
     sex: "all",
     ageMin: "",
     ageMax: "",
-    sortBy: "name",
+    sortBy: "recent",
   });
+  const [currentPage, setCurrentPage] = useState(1); // Track the current page
+  const resultsPerPage = 8;
 
   const { patients, searchPatients } = usePatients();
 
@@ -223,7 +233,10 @@ const Search = () => {
 
         {filteredPatients.length > 0 ? (
           <PatientList
-            patients={filteredPatients}
+            patients={filteredPatients.slice(
+              (currentPage - 1) * resultsPerPage,
+              currentPage * resultsPerPage,
+            )}
             containerClassName="h-[calc(100vh-300px)]"
           />
         ) : (
@@ -237,6 +250,49 @@ const Search = () => {
             }
           />
         )}
+      </div>
+      <div className="flex justify-center mt-4">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+            </PaginationItem>
+
+            {Array.from(
+              { length: Math.ceil(filteredPatients.length / resultsPerPage) },
+              (_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink
+                    isActive={currentPage === index + 1}
+                    onClick={() => setCurrentPage(index + 1)}
+                  >
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ),
+            )}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.min(
+                      prev + 1,
+                      Math.ceil(filteredPatients.length / resultsPerPage),
+                    ),
+                  )
+                }
+                disabled={
+                  currentPage ===
+                  Math.ceil(filteredPatients.length / resultsPerPage)
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </Layout>
   );
