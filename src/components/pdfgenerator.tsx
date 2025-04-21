@@ -76,6 +76,10 @@ function generatePDF(patient) {
       y += lineSpacing;
       pdf.text(`  Prescription: ${visit.prescription || "N/A"}`, margin, y);
       y += lineSpacing;
+      if (visit.medication) {
+        pdf.text(`Medication: ${visit.medication}`, margin, y);
+        y += lineSpacing;
+      }
       pdf.text(`  Notes: ${visit.notes || "N/A"}`, margin, y);
       y += 10;
 
