@@ -668,7 +668,7 @@ const PatientDetail = () => {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.2 }}
-                          className="pt-2 space-y-4"
+                          className="pt-2 space-y-2"
                         >
                           <h4 className="text-sm uppercase tracking-wide mb-1">
                             Notes
