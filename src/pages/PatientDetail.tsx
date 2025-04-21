@@ -575,7 +575,9 @@ const PatientDetail = () => {
                 .map((visit, index) => (
                   <motion.div
                     key={visit.id}
-                    className={cn("glass border rounded-xl p-5 shadow-subtle")}
+                    className={cn(
+                      "glass border rounded-xl p-5 shadow-subtle border-zinc-400",
+                    )}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
