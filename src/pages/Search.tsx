@@ -130,7 +130,7 @@ const Search = () => {
   }, [filters, baseResults]);
 
   return (
-    <Layout className="dark:bg-zinc-800 dark:text-white dark:min-h-screen bg-green-100">
+    <Layout className="dark:bg-zinc-800 dark:text-white min-h-screen bg-green-100">
       <div className="container max-w-6xl py-6 space-y-6 mx-auto ">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
