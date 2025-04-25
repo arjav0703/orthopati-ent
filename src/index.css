@@ -9,7 +9,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 * {
-    font-family: "Noto Sans";
+    font-family: "Noto Sans", Arial, Helvetica, sans-serif;
     font-optical-sizing: auto;
     font-weight:;
     font-style: normal;
