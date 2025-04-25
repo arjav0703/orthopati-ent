@@ -1,46 +1,17 @@
 import express from "express";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import mysql from "mysql2/promise";
+import { Pool } from "pg"; // PostgreSQL driver
 import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
 import path from "path";
 
 const app = express();
 
-// function authentication(req, res, next) {
-//   const authheader = req.headers.authorization;
-//   console.log(req.headers);
-
-//   if (!authheader) {
-//     let err = new Error("You are not authenticated!");
-//     res.setHeader("WWW-Authenticate", "Basic");
-//     err.status = 401;
-//     return next(err);
-//   }
-
-//   const auth = new Buffer.from(authheader.split(" ")[1], "base64")
-//     .toString()
-//     .split(":");
-//   const user = auth[0];
-//   const pass = auth[1];
-
-//   if (user == "admin" && pass == "password") {
-//     // If Authorized user
-//     next();
-//   } else {
-//     let err = new Error("You are not authenticated!");
-//     res.setHeader("WWW-Authenticate", "Basic");
-//     err.status = 401;
-//     return next(err);
-//   }
-// }
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// First step is the authentication of the client
-// app.use(authentication);
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 80;
@@ -49,17 +20,17 @@ const PORT = process.env.PORT || 80;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// Database configuration matching docker-compose.yml exactly
+// Database configuration
 const dbConfig = {
-  host: process.env.DB_HOST || "mysql",
+  host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "user",
   password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_NAME || "cli_pat",
-  port: parseInt(process.env.DB_PORT || "3306"),
+  port: parseInt(process.env.DB_PORT || "5432"),
 };
 
-// Create MySQL connection pool
-const pool = mysql.createPool(dbConfig);
+// Create PostgreSQL connection pool
+const pool = new Pool(dbConfig);
 
 console.log("Using database config:", {
   host: dbConfig.host,
@@ -72,15 +43,15 @@ console.log("Using database config:", {
 // Initialize database
 const initDatabase = async () => {
   try {
-    const connection = await pool.getConnection();
+    const client = await pool.connect();
 
     // Create patients table
-    await connection.execute(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS patients (
-        id VARCHAR(36) PRIMARY KEY,
+        id UUID PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         age INT NOT NULL,
-        sex ENUM('Male', 'Female', 'Other') NOT NULL,
+        sex VARCHAR(10) NOT NULL CHECK (sex IN ('Male', 'Female', 'Other')),
         contact VARCHAR(50),
         diagnosis TEXT,
         notes TEXT,
@@ -89,34 +60,32 @@ const initDatabase = async () => {
     `);
 
     // Create visits table
-    await connection.execute(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS visits (
-        id VARCHAR(36) PRIMARY KEY,
-        patientId VARCHAR(36) NOT NULL,
+        id UUID PRIMARY KEY,
+        patientId UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
         date TIMESTAMP NOT NULL,
         diagnosis TEXT,
-        medications TEXT,
+        medications JSONB,
         prescription TEXT,
         notes TEXT,
         xrayRequired BOOLEAN DEFAULT FALSE,
-        fileData LONGTEXT,
+        fileData TEXT,
         fileName VARCHAR(255),
-        fileType VARCHAR(100),
-        FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE
+        fileType VARCHAR(100)
       )
     `);
 
     // Create visit_images table for storing image references
-    await connection.execute(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS visit_images (
-        id VARCHAR(36) PRIMARY KEY,
-        visitId VARCHAR(36) NOT NULL,
-        imageData LONGTEXT NOT NULL,
-        FOREIGN KEY (visitId) REFERENCES visits(id) ON DELETE CASCADE
+        id UUID PRIMARY KEY,
+        visitId UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
+        imageData TEXT NOT NULL
       )
     `);
 
-    connection.release();
+    client.release();
     console.log("Database initialized successfully");
     return true;
   } catch (error) {
@@ -125,40 +94,37 @@ const initDatabase = async () => {
   }
 };
 
-// Parse JSON body
-app.use(express.json({ limit: "50mb" }));
-
 // API endpoints
 app.get("/api/patients", async (req, res) => {
   try {
-    const [patients] = await pool.execute("SELECT * FROM patients");
+    const { rows: patients } = await pool.query("SELECT * FROM patients");
 
     // For each patient, get their visits
     const enrichedPatients = await Promise.all(
       patients.map(async (patient) => {
-        const [visits] = await pool.execute(
-          "SELECT * FROM visits WHERE patientId = ?",
+        const { rows: visits } = await pool.query(
+          "SELECT * FROM visits WHERE patientId = $1",
           [patient.id],
         );
 
         // For each visit, get images
         const enrichedVisits = await Promise.all(
           visits.map(async (visit) => {
-            const [images] = await pool.execute(
-              "SELECT * FROM visit_images WHERE visitId = ?",
+            const { rows: images } = await pool.query(
+              "SELECT * FROM visit_images WHERE visitId = $1",
               [visit.id],
             );
             return {
               ...visit,
               date: new Date(visit.date).toISOString(),
-              images: images.map((img) => img.imageData),
+              images: images.map((img) => img.imagedata),
             };
           }),
         );
 
         return {
           ...patient,
-          createdAt: new Date(patient.createdAt).toISOString(),
+          createdAt: new Date(patient.createdat).toISOString(),
           visits: enrichedVisits,
         };
       }),
@@ -173,8 +139,8 @@ app.get("/api/patients", async (req, res) => {
 
 app.get("/api/patients/:id", async (req, res) => {
   try {
-    const [patients] = await pool.execute(
-      "SELECT * FROM patients WHERE id = ?",
+    const { rows: patients } = await pool.query(
+      "SELECT * FROM patients WHERE id = $1",
       [req.params.id],
     );
     if (patients.length === 0) {
@@ -184,29 +150,29 @@ app.get("/api/patients/:id", async (req, res) => {
     const patient = patients[0];
 
     // Get visits
-    const [visits] = await pool.execute(
-      "SELECT * FROM visits WHERE patientId = ?",
+    const { rows: visits } = await pool.query(
+      "SELECT * FROM visits WHERE patientId = $1",
       [patient.id],
     );
 
     // For each visit, get images
     const enrichedVisits = await Promise.all(
       visits.map(async (visit) => {
-        const [images] = await pool.execute(
-          "SELECT * FROM visit_images WHERE visitId = ?",
+        const { rows: images } = await pool.query(
+          "SELECT * FROM visit_images WHERE visitId = $1",
           [visit.id],
         );
         return {
           ...visit,
           date: new Date(visit.date).toISOString(),
-          images: images.map((img) => img.imageData),
+          images: images.map((img) => img.imagedata),
         };
       }),
     );
 
     res.json({
       ...patient,
-      createdAt: new Date(patient.createdAt).toISOString(),
+      createdAt: new Date(patient.createdat).toISOString(),
       visits: enrichedVisits,
     });
   } catch (error) {
@@ -219,26 +185,14 @@ app.post("/api/patients", async (req, res) => {
   try {
     const { name, age, sex, contact, diagnosis, notes } = req.body;
 
-    // Validate required fields
     if (!name || !age || !sex) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const id = uuidv4();
 
-    // Debug log
-    console.log("Creating patient with data:", {
-      id,
-      name,
-      age,
-      sex,
-      contact,
-      diagnosis,
-      notes,
-    });
-
-    await pool.execute(
-      "INSERT INTO patients (id, name, age, sex, contact, diagnosis, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    await pool.query(
+      "INSERT INTO patients (id, name, age, sex, contact, diagnosis, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)",
       [id, name, age, sex, contact || null, diagnosis || null, notes || null],
     );
 
@@ -262,13 +216,15 @@ app.put("/api/patients/:id", async (req, res) => {
       return res.status(400).json({ error: "No valid fields to update" });
     }
 
-    const setClause = updateFields.map((field) => `${field} = ?`).join(", ");
+    const setClause = updateFields
+      .map((field, index) => `${field} = $${index + 1}`)
+      .join(", ");
     const values = updateFields.map((field) => updateData[field]);
 
-    await pool.execute(`UPDATE patients SET ${setClause} WHERE id = ?`, [
-      ...values,
-      id,
-    ]);
+    await pool.query(
+      `UPDATE patients SET ${setClause} WHERE id = $${values.length + 1}`,
+      [...values, id],
+    );
 
     res.json({ success: true });
   } catch (error) {
@@ -279,7 +235,7 @@ app.put("/api/patients/:id", async (req, res) => {
 
 app.delete("/api/patients/:id", async (req, res) => {
   try {
-    await pool.execute("DELETE FROM patients WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM patients WHERE id = $1", [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     console.error("Error deleting patient:", error);
@@ -304,8 +260,8 @@ app.post("/api/patients/:patientId/visits", async (req, res) => {
     } = req.body;
     const visitId = uuidv4();
 
-    await pool.execute(
-      "INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired, fileData, fileName, fileType, medications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    await pool.query(
+      "INSERT INTO visits (id, patientId, date, diagnosis, prescription, notes, xrayRequired, fileData, fileName, fileType, medications) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
       [
         visitId,
         patientId,
@@ -317,15 +273,14 @@ app.post("/api/patients/:patientId/visits", async (req, res) => {
         fileData || null,
         fileName || null,
         fileType || null,
-        JSON.stringify(medications), // Convert medications array to JSON
+        JSON.stringify(medications),
       ],
     );
 
-    // Add images if present
     if (images && images.length > 0) {
       for (const imageData of images) {
-        await pool.execute(
-          "INSERT INTO visit_images (id, visitId, imageData) VALUES (?, ?, ?)",
+        await pool.query(
+          "INSERT INTO visit_images (id, visitId, imageData) VALUES ($1, $2, $3)",
           [uuidv4(), visitId, imageData],
         );
       }
@@ -347,38 +302,36 @@ app.get("/api/search", async (req, res) => {
 
     const searchQuery = `%${query.toLowerCase()}%`;
 
-    const [patients] = await pool.execute(
-      "SELECT * FROM patients WHERE LOWER(name) LIKE ? OR LOWER(diagnosis) LIKE ? OR LOWER(notes) LIKE ?",
+    const { rows: patients } = await pool.query(
+      "SELECT * FROM patients WHERE LOWER(name) LIKE $1 OR LOWER(diagnosis) LIKE $2 OR LOWER(notes) LIKE $3",
       [searchQuery, searchQuery, searchQuery],
     );
 
-    // For each patient, get their visits
     const enrichedPatients = await Promise.all(
       patients.map(async (patient) => {
-        const [visits] = await pool.execute(
-          "SELECT * FROM visits WHERE patientId = ?",
+        const { rows: visits } = await pool.query(
+          "SELECT * FROM visits WHERE patientId = $1",
           [patient.id],
         );
 
-        // For each visit, get images
         const enrichedVisits = await Promise.all(
           visits.map(async (visit) => {
-            const [images] = await pool.execute(
-              "SELECT * FROM visit_images WHERE visitId = ?",
+            const { rows: images } = await pool.query(
+              "SELECT * FROM visit_images WHERE visitId = $1",
               [visit.id],
             );
             return {
               ...visit,
               date: new Date(visit.date).toISOString(),
-              medications: JSON.parse(visit.medications || "[]"), // Parse medications JSON
-              images: images.map((img) => img.imageData),
+              medications: JSON.parse(visit.medications || "[]"),
+              images: images.map((img) => img.imagedata),
             };
           }),
         );
 
         return {
           ...patient,
-          createdAt: new Date(patient.createdAt).toISOString(),
+          createdAt: new Date(patient.createdat).toISOString(),
           visits: enrichedVisits,
         };
       }),
@@ -391,27 +344,24 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
-// Add endpoint to download visit file
 app.get("/api/visits/:visitId/file", async (req, res) => {
   try {
     const { visitId } = req.params;
-    const [visits] = await pool.execute(
-      "SELECT fileData, fileName, fileType FROM visits WHERE id = ?",
+    const { rows: visits } = await pool.query(
+      "SELECT fileData, fileName, fileType FROM visits WHERE id = $1",
       [visitId],
     );
 
-    if (visits.length === 0 || !visits[0].fileData) {
+    if (visits.length === 0 || !visits[0].filedata) {
       return res.status(404).json({ error: "File not found" });
     }
 
-    const { fileData, fileName, fileType } = visits[0];
+    const { filedata, filename, filetype } = visits[0];
 
-    // Set appropriate headers for file download
-    res.setHeader("Content-Type", fileType);
-    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    res.setHeader("Content-Type", filetype);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
-    // Send base64 decoded file data
-    const buffer = Buffer.from(fileData, "base64");
+    const buffer = Buffer.from(filedata, "base64");
     res.send(buffer);
   } catch (error) {
     console.error("Error downloading file:", error);
