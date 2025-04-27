@@ -26,3 +26,5 @@ current tested on Linux (arch btw)
     #### Start Server
       - you might want to reconfigure .env file to your needs
       - run `node server.js` to start the application with backend
+
+Orthopatient: Patient Management System © 2025 by Arjav Jain is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
